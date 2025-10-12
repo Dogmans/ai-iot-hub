@@ -76,9 +76,59 @@ async def main():
         bulb.set_color("warm_white")
 ```
 
-## Architecture
+## How It Works
 
-### Core Components
+### Complete Workflow
+
+AI-IoT Hub uses a sophisticated AI-driven workflow that combines intelligent device discovery, automatic documentation processing, and dynamic code generation:
+
+#### 1. **Device Discovery** 🔍
+```
+You: "Discover devices on my network"
+↓
+AI Hub: Uses multi-method discovery (mDNS, netdisco, HTTP fingerprinting)
+↓ 
+Result: "Found Samsung SmartThings Hub at 192.168.1.100 (confidence: 90%)"
+```
+
+#### 2. **Intelligent Documentation Search** 📚
+```
+AI Hub: "I need SmartThings API docs to generate communication code"
+↓
+AI searches web intelligently: "Samsung SmartThings API documentation site:developer.samsung.com"
+↓
+Downloads: SmartThings API docs → saves to devices/raw_docs/samsung_smartthings/
+```
+
+#### 3. **Dynamic Code Generation** ⚡
+```
+AI Hub: "Now I'll generate Python code to communicate with this device"
+↓
+CodeAgent reads documentation files directly (PDFs, URLs, JSON)
+↓
+Generates: tools/generated/smartthings_192_168_1_100.py (complete communication class)
+```
+
+#### 4. **Device Control** 🎯
+```
+You: "Turn on washing machine at 192.168.1.100"
+↓
+AI Hub: Imports and executes generated communication code
+↓
+Prompts for credentials if needed → Sends command → Returns result
+```
+
+### Key Innovations
+
+- **🧠 LLM-Native Processing**: No hardcoded parsers - AI understands any document format
+- **🔍 Multi-Method Discovery**: Combines nmap, mDNS, UPnP, HTTP fingerprinting with confidence scoring  
+- **📝 Intelligent Search**: AI constructs context-aware queries for manufacturer documentation
+- **⚡ Direct File Access**: CodeAgent reads files directly without intermediate parsing tools
+- **🔄 Smart Caching**: Generated code is reused, documentation is cached locally
+
+### Architecture
+
+#### Core Components
 
 - **Agent-Driven Flow**: LLM parses docs → generates code → executes commands
 - **Dynamic Code Generation**: smolagents CodeAgent creates device communication modules
@@ -115,25 +165,107 @@ ai-iot-hub/
 - **Bluetooth Low Energy** - BLE sensors and devices
 - **Serial** - USB/RS485 connected devices
 
+## Detailed Example Walkthrough
+
+### Real-World Scenario: SmartThings Washing Machine
+
+#### Step 1: Discovery
+```bash
+$ python interactive_hub.py
+You: "Discover devices on my network"
+
+AI-IoT Hub: 🔍 Scanning network with comprehensive discovery...
+           📡 Found Samsung SmartThings Hub at 192.168.1.100
+           🏠 Detected washing machine device (confidence: 95%)
+           ✅ SmartThings API protocol identified
+```
+
+#### Step 2: Documentation Processing
+```
+AI-IoT Hub: 🧠 I need SmartThings documentation to generate communication code
+           🌐 Searching: "Samsung SmartThings API documentation site:developer.samsung.com"  
+           📥 Downloaded: SmartThings REST API specification
+           📄 Processed: OAuth2 authentication requirements identified
+```
+
+#### Step 3: Code Generation
+```python
+# AI generates tools/generated/smartthings_192_168_1_100.py:
+
+class SmartThingsDevice:
+    def __init__(self, ip: str, access_token: str):
+        self.base_url = f"https://{ip}:8080"
+        self.headers = {"Authorization": f"Bearer {access_token}"}
+    
+    def get_devices(self):
+        # Auto-generated from API documentation
+        return requests.get(f"{self.base_url}/devices", headers=self.headers).json()
+    
+    def send_command(self, device_id: str, command: str, value: str):
+        # Extracted from SmartThings API examples
+        payload = {"commands": [{"command": command, "value": value}]}
+        return requests.post(f"{self.base_url}/devices/{device_id}/commands", 
+                           json=payload, headers=self.headers)
+```
+
+#### Step 4: Interactive Control
+```bash
+You: "Start washing machine at 192.168.1.100"
+
+AI-IoT Hub: 🔑 I need your SmartThings credentials to control this device
+           📝 Please provide your Personal Access Token: [secure input]
+           💾 Credentials saved securely for future use
+           
+           ⚡ Executing command...
+           ✅ Washing machine started successfully!
+           📊 Status: Running delicate cycle, 45 minutes remaining
+```
+
+### File System After Processing
+```
+devices/
+├── raw_docs/samsung_smartthings/
+│   ├── smartthings_api_docs.json      # Auto-downloaded API spec
+│   └── developer_guide_url.txt        # Documentation URL reference
+├── discovered_devices.json            # Network scan results
+└── generated_specs/                   # AI-processed specifications
+
+tools/generated/
+└── smartthings_192_168_1_100.py      # Generated communication module
+
+config/
+└── credentials.json                   # Secure credential storage
+```
+
 ## Device Integration Examples
 
-### SmartThings Devices
-```python
-# Place API URL in devices/raw_docs/thermostats/smartthings_api.txt
-# AI generates complete REST API client with authentication
-```
+### Any Device Type - AI Figures It Out!
 
-### Modbus TCP Devices
-```python
-# Drop Modbus manual PDF in devices/raw_docs/sensors/
-# AI creates socket-based communication with register mapping
-```
+The beauty of AI-IoT Hub is that you don't need device-specific integration code. The AI handles everything:
 
-### MQTT Sensors
-```python
-# Provide MQTT broker documentation
-# AI generates pub/sub client with topic structure
-```
+#### SmartThings Ecosystem
+- **Discovery**: mDNS detection + HTTP fingerprinting
+- **Documentation**: Auto-downloads from developer.samsung.com
+- **Authentication**: OAuth2 + Personal Access Token prompting
+- **Communication**: REST API with WebSocket events
+
+#### Philips Hue
+- **Discovery**: Hue Bridge mDNS service detection  
+- **Documentation**: Auto-fetches from developers.meethue.com
+- **Authentication**: API key generation workflow
+- **Communication**: REST API with color/brightness control
+
+#### Modbus Industrial Devices
+- **Discovery**: Port 502 detection + manufacturer identification
+- **Documentation**: PDF manual processing + register extraction
+- **Authentication**: Usually none required
+- **Communication**: TCP socket with register read/write
+
+#### MQTT IoT Sensors  
+- **Discovery**: Network scanning + protocol detection
+- **Documentation**: Broker specification processing
+- **Authentication**: Username/password or certificate-based
+- **Communication**: Pub/sub with topic autodiscovery
 
 ## Development
 
@@ -153,6 +285,34 @@ flake8 src/ tests/
 ### Type Checking
 ```bash
 mypy src/
+```
+
+## Installation Options
+
+### Basic Installation (Ping-based discovery)
+```bash
+pip install -e .
+```
+**Capabilities**: Basic device discovery, document processing, code generation
+
+### Full Network Discovery (Recommended)
+```bash
+pip install -e ".[network]"
+```
+**Capabilities**: Advanced device discovery (mDNS, netdisco, MAC lookup, HTTP fingerprinting)
+
+### Complete Development Setup
+```bash
+pip install -e ".[network,ai,dev]"
+```
+**Capabilities**: Full functionality + smolagents CodeAgent + development tools
+
+### Optional: Enhanced Discovery (requires system dependencies)
+```bash
+# For 100% discovery capability, install nmap system binary:
+# Windows: Download from https://nmap.org/download.html
+# macOS: brew install nmap
+# Linux: apt-get install nmap
 ```
 
 ## Configuration
@@ -180,6 +340,43 @@ cache_ttl: 3600
     }
   }
 }
+```
+
+## FAQ & Troubleshooting
+
+### Q: "No devices found during discovery"
+**A**: 
+1. Check network range in config: `network.scan_range: "192.168.1.0/24"`
+2. Install network dependencies: `pip install -e ".[network]"`  
+3. For full capability, install nmap system binary
+
+### Q: "AI can't find documentation for my device"
+**A**: 
+1. Drop any PDF/manual in `devices/raw_docs/{category}/`
+2. Add URL file: `echo "https://device-api-docs.com" > devices/raw_docs/sensors/my_device_api.txt`
+3. AI will search intelligently and adapt to any documentation format
+
+### Q: "Generated code doesn't work with my device"
+**A**:
+1. AI learns from errors - run again and it will adapt the generated code
+2. Provide more specific documentation in `raw_docs/`
+3. Check credentials are correct for your device type
+
+### Q: "How do I add a completely new device type?"
+**A**: 
+Just use it! The AI automatically:
+1. Discovers the device type and manufacturer  
+2. Searches for appropriate documentation online
+3. Downloads and processes the documentation
+4. Generates communication code tailored to that device
+5. Prompts for any required credentials
+
+### Q: "Can I use my own LLM model?"
+**A**: Yes! Configure in `config/hub_config.yaml`:
+```yaml
+model:
+  model_id: "your-model-id" 
+  # Works with any Hugging Face model or OpenAI API
 ```
 
 ## Contributing

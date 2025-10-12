@@ -16,29 +16,119 @@ import yaml
 
 from smolagents import Tool
 
+# Import our comprehensive discovery engine
+try:
+    from ..discovery.comprehensive_discovery import get_discovery_engine
+    HAS_COMPREHENSIVE_DISCOVERY = True
+except ImportError:
+    HAS_COMPREHENSIVE_DISCOVERY = False
+
 logger = logging.getLogger(__name__)
 
 class DeviceDiscoveryTool(Tool):
     name = "device_discovery"
     description = """
-    Discover IoT devices on the network by scanning IP ranges and detecting services.
+    Discover IoT devices on the network using comprehensive multi-method discovery.
+    Uses nmap, mDNS, UPnP, and HTTP fingerprinting for accurate device identification.
     Use this to find devices before trying to communicate with them.
     """
     
-    def forward(self, ip_range: str = "192.168.1.0/24", ports: List[int] = None) -> Dict[str, Any]:
-        """Discover devices on network"""
+    def __init__(self):
+        super().__init__()
+        self.discovery_engine = None
+        if HAS_COMPREHENSIVE_DISCOVERY:
+            try:
+                self.discovery_engine = get_discovery_engine()
+                logger.info("Initialized comprehensive device discovery engine")
+            except Exception as e:
+                logger.warning(f"Failed to initialize comprehensive discovery: {e}")
+    
+    def forward(self, network_range: str = "192.168.1.0/24", timeout: int = 30) -> Dict[str, Any]:
+        """
+        Discover devices on network using comprehensive multi-method approach.
         
-        if ports is None:
-            ports = [80, 443, 502, 1883, 8080]  # Common IoT ports
+        Args:
+            network_range: CIDR network range to scan (e.g., "192.168.1.0/24")
+            timeout: Maximum time to spend on discovery in seconds
+            
+        Returns:
+            Dictionary with discovered devices and metadata
+        """
+        logger.info(f"Starting comprehensive device discovery on {network_range}")
         
-        logger.info(f"Scanning network range: {ip_range}")
+        # Use comprehensive discovery if available
+        if self.discovery_engine:
+            try:
+                discovered_devices = self.discovery_engine.discover_all_methods(
+                    network_range=network_range, 
+                    timeout=timeout
+                )
+                
+                # Convert to simplified format for AI agent
+                simplified_devices = []
+                for ip, device_data in discovered_devices.items():
+                    device_info = {
+                        "ip": ip,
+                        "hostname": device_data.get('hostname', ''),
+                        "manufacturer": device_data.get('manufacturer', 'Unknown'),
+                        "device_type": device_data.get('device_type', 'Unknown'),
+                        "mac_address": device_data.get('mac', ''),
+                        "confidence_score": device_data.get('confidence_score', 0.0),
+                        "discovery_methods": [method for method in ['nmap', 'mdns', 'upnp', 'netdisco'] 
+                                            if device_data.get(f'{method}_detected')],
+                        "services": device_data.get('services', []),
+                        "open_ports": list(device_data.get('services', {}).keys()) if isinstance(device_data.get('services'), dict) else []
+                    }
+                    
+                    # Add SmartThings specific information
+                    if 'smartthings' in device_info['manufacturer'].lower():
+                        device_info['communication_protocol'] = 'smartthings_api'
+                        device_info['requires_credentials'] = True
+                        device_info['credential_types'] = ['access_token', 'device_id']
+                    
+                    # Add other device type specific info
+                    elif 'philips' in device_info['manufacturer'].lower() and 'hue' in device_info['device_type'].lower():
+                        device_info['communication_protocol'] = 'philips_hue_api'
+                        device_info['requires_credentials'] = True
+                        device_info['credential_types'] = ['username']
+                    
+                    elif 'modbus' in device_info.get('device_type', '').lower() or 502 in device_info['open_ports']:
+                        device_info['communication_protocol'] = 'modbus_tcp'
+                        device_info['requires_credentials'] = False
+                    
+                    simplified_devices.append(device_info)
+                
+                # Update device registry
+                self._update_device_registry(simplified_devices)
+                
+                logger.info(f"Comprehensive discovery completed. Found {len(simplified_devices)} IoT devices")
+                
+                return {
+                    "discovered_devices": simplified_devices,
+                    "scan_range": network_range,
+                    "total_found": len(simplified_devices),
+                    "discovery_method": "comprehensive_multi_method",
+                    "high_confidence_devices": [d for d in simplified_devices if d['confidence_score'] > 0.7]
+                }
+                
+            except Exception as e:
+                logger.error(f"Comprehensive discovery failed: {e}")
+                # Fall back to simple discovery
+                return self._fallback_discovery(network_range)
         
-        # Simple ping-based discovery (replace with nmap in full implementation)
+        else:
+            logger.warning("Comprehensive discovery not available, using fallback method")
+            return self._fallback_discovery(network_range)
+    
+    def _fallback_discovery(self, network_range: str) -> Dict[str, Any]:
+        """Fallback discovery method when comprehensive discovery is not available."""
+        logger.info(f"Using fallback ping-based discovery for {network_range}")
+        
         discovered_devices = []
         
         # Extract IP range for simple scanning
-        if "/" in ip_range:
-            base_ip = ip_range.split("/")[0].rsplit(".", 1)[0]
+        if "/" in network_range:
+            base_ip = network_range.split("/")[0].rsplit(".", 1)[0]
             
             # Scan first 10 IPs for demo (would be full range in production)
             for i in range(1, 11):
@@ -56,24 +146,36 @@ class DeviceDiscoveryTool(Tool):
                         # Try to detect device type by checking common ports
                         device_info = {
                             "ip": ip,
-                            "status": "online",
-                            "open_ports": [],
-                            "device_type": "unknown"
+                            "hostname": "",
+                            "manufacturer": "Unknown",
+                            "device_type": "Unknown",
+                            "mac_address": "",
+                            "confidence_score": 0.3,  # Low confidence for fallback method
+                            "discovery_methods": ["ping"],
+                            "services": [],
+                            "open_ports": []
                         }
                         
                         # Check if common IoT ports are open
-                        for port in [80, 443, 502]:
+                        for port in [80, 443, 502, 1883, 8080]:
                             if self._check_port(ip, port):
                                 device_info["open_ports"].append(port)
                         
-                        # Infer device type from open ports
+                        # Infer device type from open ports (basic heuristics)
                         if 502 in device_info["open_ports"]:
                             device_info["device_type"] = "modbus_device"
+                            device_info["communication_protocol"] = "modbus_tcp"
+                            device_info["requires_credentials"] = False
+                            device_info["confidence_score"] = 0.5
+                        elif 1883 in device_info["open_ports"]:
+                            device_info["device_type"] = "mqtt_device"
+                            device_info["communication_protocol"] = "mqtt"
                         elif 80 in device_info["open_ports"] or 443 in device_info["open_ports"]:
                             device_info["device_type"] = "web_device"
+                            device_info["communication_protocol"] = "http"
                         
                         discovered_devices.append(device_info)
-                        logger.info(f"Found device at {ip}")
+                        logger.info(f"Found device at {ip} (fallback method)")
                         
                 except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
                     continue
@@ -83,8 +185,10 @@ class DeviceDiscoveryTool(Tool):
         
         return {
             "discovered_devices": discovered_devices,
-            "scan_range": ip_range,
-            "total_found": len(discovered_devices)
+            "scan_range": network_range,
+            "total_found": len(discovered_devices),
+            "discovery_method": "ping_fallback",
+            "note": "Install network dependencies (pip install -e '.[network]') for comprehensive discovery"
         }
     
     def _check_port(self, ip: str, port: int, timeout: float = 1.0) -> bool:
@@ -100,16 +204,24 @@ class DeviceDiscoveryTool(Tool):
         except:
             return False
     
-    def _update_device_registry(self, devices: List[Dict]):
+    def _update_device_registry(self, devices: List[Dict[str, Any]]):
         """Update the device registry file"""
         registry_path = Path("devices/discovered_devices.json")
         registry_path.parent.mkdir(parents=True, exist_ok=True)
         
+        # Add timestamp and discovery metadata
+        registry_data = {
+            "last_scan": "2025-10-12T12:00:00Z",  # Would use actual timestamp
+            "discovery_engine": "comprehensive" if self.discovery_engine else "fallback",
+            "total_devices": len(devices),
+            "high_confidence_devices": len([d for d in devices if d.get('confidence_score', 0) > 0.7]),
+            "devices": devices
+        }
+        
         with open(registry_path, 'w') as f:
-            json.dump({
-                "last_scan": "2025-01-12T00:00:00Z",
-                "devices": devices
-            }, f, indent=2)
+            json.dump(registry_data, f, indent=2)
+        
+        logger.info(f"Updated device registry with {len(devices)} devices")
 
 
 class DeviceControlTool(Tool):
