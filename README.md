@@ -142,9 +142,8 @@ ai-iot-hub/
 ├── src/
 │   ├── hub/ai_controller.py           # Main LLM controller
 │   └── agents/
-│       ├── spec_analyzer.py           # Document → structured specs
-│       ├── device_tools.py            # smolagents Tools
-│       └── code_writing_agent.py      # Dynamic code generation
+│       ├── device_tools.py            # smolagents Tools for discovery/control
+│       └── code_writing_agent.py      # Dynamic code generation (processes docs directly)
 ├── devices/
 │   ├── raw_docs/                      # Drop zone for device docs
 │   │   ├── thermostats/

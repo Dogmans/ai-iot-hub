@@ -12,86 +12,30 @@ from pathlib import Path
 # Add the src directory to Python path
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
-from agents.spec_analyzer import SpecAnalyzer
 from agents.code_writing_agent import DeviceCodeAgent
 
 async def process_smartthings_washing_machine():
-    """Process SmartThings API docs and generate washing machine communicator"""
+    """Generate washing machine communicator using CodeAgent (processes docs directly)"""
     
     print("🚀 AI-IoT Hub Demo: Samsung SmartThings Washing Machine")
     print("=" * 60)
     
-    # Initialize our agents
-    spec_analyzer = SpecAnalyzer()
+    # Initialize code agent (processes documentation directly)
     code_agent = DeviceCodeAgent()
     
-    # Step 1: Process the SmartThings API documentation
+    # Step 1: Documentation ready for CodeAgent processing
     doc_path = Path("devices/raw_docs/thermostats/samsung_smartthings_api.txt")
-    print(f"\n📄 Step 1: Processing documentation from {doc_path}")
-    
-    try:
-        spec = await spec_analyzer.parse_document(doc_path)
-        print(f"✅ Generated spec with {len(spec.get('endpoints', []))} endpoints")
-        print(f"   Protocol: {spec.get('protocol')}")
-        print(f"   Device Type: {spec.get('device_type')}")
-    except Exception as e:
-        print(f"❌ Error processing documentation: {e}")
-        return
+    print(f"\n📄 Step 1: Documentation available at {doc_path}")
+    print("✅ CodeAgent will process documentation directly during code generation")
     
     # Step 2: Generate communication code for washing machine
     device_ip = "192.168.0.5"
-    device_type = "washing_machine"  # Override for our specific use case
+    device_type = "washing_machine"
     
     print(f"\n🔧 Step 2: Generating communication code for washing machine at {device_ip}")
     
     try:
-        # Update spec for washing machine specifics
-        washing_machine_spec = spec.copy()
-        washing_machine_spec['device_type'] = device_type
-        washing_machine_spec['endpoints'] = [
-            {
-                "name": "get_status",
-                "method": "GET",
-                "path": "/api/v1/devices/{device_id}/status",
-                "description": "Get washing machine status (running, idle, complete)"
-            },
-            {
-                "name": "start_cycle",
-                "method": "POST", 
-                "path": "/api/v1/devices/{device_id}/commands",
-                "description": "Start a wash cycle",
-                "parameters": {
-                    "command": {"type": "string", "required": True, "value": "start"},
-                    "cycle_type": {"type": "string", "required": False, "options": ["normal", "delicate", "heavy"]}
-                }
-            },
-            {
-                "name": "stop_cycle",
-                "method": "POST",
-                "path": "/api/v1/devices/{device_id}/commands", 
-                "description": "Stop current wash cycle",
-                "parameters": {
-                    "command": {"type": "string", "required": True, "value": "stop"}
-                }
-            },
-            {
-                "name": "get_cycle_progress",
-                "method": "GET",
-                "path": "/api/v1/devices/{device_id}/progress",
-                "description": "Get current cycle progress and time remaining"
-            }
-        ]
-        
-        # Save washing machine specific spec
-        import json
-        spec_path = Path("devices/generated_specs/samsung_washing_machine_spec.json")
-        spec_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(spec_path, 'w') as f:
-            json.dump(washing_machine_spec, f, indent=2)
-        
-        print(f"✅ Saved washing machine spec to: {spec_path}")
-        
-        # Generate the communication code
+        # Generate the communication code (CodeAgent will process docs directly)
         generated_code = await code_agent.generate_device_communicator(device_ip, device_type)
         
         # Save the generated code
@@ -132,9 +76,9 @@ async def process_smartthings_washing_machine():
     print("washer.disconnect()")
     print("```")
     
-    print(f"\n✨ Demo complete! Files generated:")
-    print(f"   📋 Spec: {spec_path}")
-    print(f"   🐍 Code: {code_path}")
+    print(f"\n✨ Demo complete! File generated:")
+    print(f"   � Code: {code_path}")
+    print(f"   � CodeAgent processed docs directly from: {doc_path}")
 
 if __name__ == "__main__":
     asyncio.run(process_smartthings_washing_machine())

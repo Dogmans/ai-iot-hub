@@ -32,9 +32,8 @@ ai-iot/
 ├── src/
 │   ├── hub/ai_controller.py           # Main LLM controller
 │   └── agents/
-│       ├── spec_analyzer.py           # Document → structured specs
-│       ├── device_tools.py            # smolagents Tools
-│       └── code_writing_agent.py      # Dynamic code generation
+│       ├── device_tools.py            # smolagents Tools for discovery/control
+│       └── code_writing_agent.py      # Dynamic code generation (LLM-native)
 ├── devices/
 │   ├── raw_docs/thermostats/
 │   │   └── samsung_smartthings_api.txt # SmartThings API URL

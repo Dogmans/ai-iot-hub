@@ -10,7 +10,7 @@ import logging
 from pathlib import Path
 from smolagents import CodeAgent, InferenceClientModel
 
-from agents.spec_analyzer import SpecAnalyzer
+
 from agents.code_writing_agent import DeviceCodeAgent
 from agents.device_discovery import NetworkDiscovery
 
@@ -21,7 +21,6 @@ class AIIoTHub:
     def __init__(self, config_path="config/hub_config.yaml"):
         self.config = self._load_config(config_path)
         self.model = InferenceClientModel()
-        self.spec_analyzer = SpecAnalyzer()
         self.code_agent = DeviceCodeAgent(model=self.model)
         self.discovery = NetworkDiscovery()
         
@@ -42,11 +41,9 @@ class AIIoTHub:
         return devices
     
     async def process_documentation(self, doc_path):
-        """Parse raw documentation into structured specs"""
-        logger.info(f"[SPEC_GEN] Processing documentation: {doc_path}")
-        spec = await self.spec_analyzer.parse_document(doc_path)
-        logger.info(f"[SPEC_GEN] Generated spec with {len(spec.get('endpoints', []))} endpoints")
-        return spec
+        """CodeAgent processes documentation directly during code generation - no separate parsing needed"""
+        logger.info(f"[DOC_READY] Documentation available at: {doc_path}")
+        return {"message": "CodeAgent will process documentation directly when generating device tools"}
     
     async def generate_device_tool(self, device_ip, device_type, force_refresh=False):
         """Generate communication tool for specific device"""

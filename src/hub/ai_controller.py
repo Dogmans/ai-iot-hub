@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional
 import yaml
 
 from smolagents import CodeAgent, InferenceClientModel
-from agents.spec_analyzer import SpecAnalyzer
+
 from agents.device_tools import DeviceDiscoveryTool, DeviceControlTool, CredentialManagerTool
 
 logging.basicConfig(level=logging.INFO)
@@ -32,7 +32,6 @@ class AIIoTHubController:
         )
         
         # Initialize agents and tools
-        self.spec_analyzer = SpecAnalyzer()
         self.device_discovery = DeviceDiscoveryTool()
         self.device_control = DeviceControlTool()
         self.credential_manager = CredentialManagerTool()

@@ -306,7 +306,7 @@ class DeviceControlTool(Tool):
     def _create_device_spec(self, device_type: str, device_ip: str, doc_file: Path) -> Dict:
         """Create device specification (simplified version)"""
         
-        # In production, this would use the SpecAnalyzer with LLM
+        # CodeAgent processes documents directly during code generation
         if "smartthings" in doc_file.name.lower():
             return {
                 "device_type": device_type,

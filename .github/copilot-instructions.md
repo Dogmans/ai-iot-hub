@@ -7,10 +7,9 @@ An intelligent IoT hub using smolagents' `CodeAgent` to dynamically discover, an
 
 ### Agent-Driven Communication Flow
 1. **Raw Documentation Ingestion** (`devices/raw_docs/`) - Drop zone for any format device docs
-2. **Spec Generation** (`src/agents/spec_analyzer.py`) - LLM parses docs → structured JSON specs  
-3. **Dynamic Code Generation** (`src/agents/code_writing_agent.py`) - smolagents CodeAgent creates device communication code
-4. **Code Caching** (`tools/generated/`) - Generated Python modules cached by device type + IP
-5. **Runtime Execution** - Import and execute generated code for device communication
+2. **Dynamic Code Generation** (`src/agents/code_writing_agent.py`) - smolagents CodeAgent reads docs directly and creates device communication code
+3. **Code Caching** (`tools/generated/`) - Generated Python modules cached by device type + IP
+4. **Runtime Execution** - Import and execute generated code for device communication
 
 ### Key Directory Structure
 ```
@@ -32,7 +31,7 @@ An intelligent IoT hub using smolagents' `CodeAgent` to dynamically discover, an
    - PDFs: `honeywell_manual.pdf`
    - URLs: `nest_api_docs.txt` (containing single URL)
    - Word docs: `modbus_sensor_spec.docx`
-2. Agent auto-parses → structured spec in `devices/generated_specs/`
+2. CodeAgent processes documentation directly during code generation
 3. On user request, CodeAgent generates communication code → `tools/generated/`
 
 ### smolagents CodeAgent Integration
@@ -81,11 +80,11 @@ async def read_sensor_data(ip, port):
 ### CodeAgent Setup
 ```python
 from smolagents import CodeAgent, InferenceClientModel
-from src.agents.device_tools import NetworkScanTool, DocParserTool
+from src.agents.device_tools import NetworkScanTool
 
 model = InferenceClientModel()
 agent = CodeAgent(
-    tools=[NetworkScanTool(), DocParserTool()], 
+    tools=[NetworkScanTool()], 
     model=model,
     additional_authorized_imports=['socket', 'requests', 'asyncio', 'paho.mqtt.client']
 )
