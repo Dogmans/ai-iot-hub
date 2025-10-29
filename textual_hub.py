@@ -14,6 +14,23 @@ sys.path.append(str(Path(__file__).parent / 'src'))
 def main():
     """Main entry point for Textual interface"""
     try:
+        # Configure logging to file before starting UI to avoid console interference
+        import logging
+        from pathlib import Path
+        
+        # Ensure logs directory exists
+        log_path = Path("logs/ai-iot-hub.log")
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Configure logging to file only (no console output)
+        logging.basicConfig(
+            level=logging.INFO,
+            format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s',
+            handlers=[
+                logging.FileHandler(log_path)
+            ]
+        )
+        
         from src.ui.textual_frontend import run_textual_app
         
         print("🚀 Starting AI-IoT Hub with Textual interface...")

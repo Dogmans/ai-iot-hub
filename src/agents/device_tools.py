@@ -126,8 +126,26 @@ class DeviceDiscoveryTool(Tool):
                 
             except Exception as e:
                 logger.error(f"Comprehensive discovery failed: {e}")
-                # Fall back to simple discovery
-                return self._fallback_discovery(network_range)
+                # Check what dependencies are missing and provide helpful fallback
+                missing_deps = self._check_discovery_dependencies()
+                fallback_result = self._fallback_discovery(network_range)
+                
+                # Add warning about limited discovery capabilities
+                fallback_result["warnings"] = [
+                    f"Comprehensive discovery failed: {str(e)}",
+                    f"Using basic ping-based discovery instead",
+                    f"Missing dependencies: {missing_deps}" if missing_deps else "Check network connectivity"
+                ]
+                
+                if missing_deps:
+                    fallback_result["recommendations"] = [
+                        "Install missing network discovery tools for better device identification:",
+                        f"pip install {' '.join([d for d in missing_deps if 'nmap (binary)' not in d])}",
+                        "Download Nmap from https://nmap.org/download.html" if any("nmap" in d for d in missing_deps) else None
+                    ]
+                    fallback_result["recommendations"] = [r for r in fallback_result["recommendations"] if r]
+                
+                return fallback_result
         
         else:
             logger.warning("Comprehensive discovery not available, using fallback method")
@@ -196,13 +214,31 @@ class DeviceDiscoveryTool(Tool):
         # Update device registry
         self._update_device_registry(discovered_devices)
         
-        return {
+        # Check what's missing and provide guidance
+        missing_deps = self._check_discovery_dependencies()
+        
+        result = {
             "discovered_devices": discovered_devices,
             "scan_range": network_range,
             "total_found": len(discovered_devices),
             "discovery_method": "ping_fallback",
-            "note": "Install network dependencies (pip install -e '.[network]') for comprehensive discovery"
+            "limitations": [
+                "Using basic ping-based discovery only",
+                "Cannot identify device manufacturers or specific models",
+                "Limited protocol detection capabilities"
+            ]
         }
+        
+        if missing_deps:
+            result["missing_dependencies"] = missing_deps
+            result["recommendations"] = [
+                "Install missing tools for comprehensive device identification:",
+                f"pip install {' '.join([d for d in missing_deps if 'nmap (binary)' not in d])}",
+                "Download Nmap from https://nmap.org/download.html" if any("nmap" in d for d in missing_deps) else None
+            ]
+            result["recommendations"] = [r for r in result["recommendations"] if r]
+        
+        return result
     
     def _check_port(self, ip: str, port: int, timeout: float = 1.0) -> bool:
         """Check if a port is open on given IP"""
@@ -217,6 +253,33 @@ class DeviceDiscoveryTool(Tool):
         except:
             return False
     
+    def _check_discovery_dependencies(self) -> List[str]:
+        """Check which discovery dependencies are missing"""
+        missing = []
+        
+        # Check for nmap binary
+        import subprocess
+        try:
+            subprocess.run(['nmap', '--version'], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            missing.append("nmap (binary)")
+        
+        # Check Python packages
+        dependencies = [
+            ("upnpclient", "upnpclient"),
+            ("netdisco", "netdisco"), 
+            ("zeroconf", "zeroconf"),
+            ("mac_vendor_lookup", "mac-vendor-lookup")
+        ]
+        
+        for import_name, package_name in dependencies:
+            try:
+                __import__(import_name)
+            except ImportError:
+                missing.append(package_name)
+        
+        return missing
+
     def _update_device_registry(self, devices: List[Dict[str, Any]]):
         """Update the device registry file"""
         registry_path = Path("devices/discovered_devices.json")
@@ -270,9 +333,31 @@ class DeviceControlTool(Tool):
             
             if not tool_path.exists():
                 logger.info(f"No cached tool found, generating new one for {device_type}")
-                success = self._generate_communication_tool(device_type, device_ip)
-                if not success:
-                    return {"error": f"Failed to generate communication tool for {device_type}"}
+                generation_result = self._generate_communication_tool(device_type, device_ip)
+                
+                if not generation_result["success"]:
+                    # Return detailed error information instead of generic failure
+                    error_response = {
+                        "device_ip": device_ip,
+                        "device_type": device_type,
+                        "command": command,
+                        "status": "failed", 
+                        "error": generation_result["error"],
+                        "message": generation_result["message"]
+                    }
+                    
+                    # Add specific guidance based on error type
+                    if generation_result["error"] == "missing_dependencies":
+                        error_response["required_action"] = "Install missing network discovery tools"
+                        error_response["install_command"] = f"pip install {' '.join(generation_result['missing_deps'])}"
+                        if "nmap (binary)" in generation_result["missing_deps"]:
+                            error_response["additional_setup"] = "Download and install Nmap from https://nmap.org/download.html"
+                    
+                    elif generation_result["error"] == "no_documentation":
+                        error_response["required_action"] = "Add device documentation"
+                        error_response["suggestions"] = generation_result["suggestions"]
+                    
+                    return error_response
             
             # Load and use the communication tool
             result = self._execute_device_command(tool_path, command)
@@ -295,8 +380,46 @@ class DeviceControlTool(Tool):
         cache_key = f"{device_type}_{device_ip.replace('.', '_')}"
         return Path(f"tools/generated/{cache_key}.py")
     
-    def _generate_communication_tool(self, device_type: str, device_ip: str) -> bool:
-        """Generate communication tool for device type"""
+    def _check_discovery_dependencies(self) -> List[str]:
+        """Check which discovery dependencies are missing"""
+        missing = []
+        
+        # Check for nmap binary
+        import subprocess
+        try:
+            subprocess.run(['nmap', '--version'], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            missing.append("nmap (binary)")
+        
+        # Check Python packages
+        dependencies = [
+            ("upnpclient", "upnpclient"),
+            ("netdisco", "netdisco"), 
+            ("zeroconf", "zeroconf"),
+            ("mac_vendor_lookup", "mac-vendor-lookup")
+        ]
+        
+        for import_name, package_name in dependencies:
+            try:
+                __import__(import_name)
+            except ImportError:
+                missing.append(package_name)
+        
+        return missing
+    
+    def _generate_communication_tool(self, device_type: str, device_ip: str) -> Dict[str, Any]:
+        """Generate communication tool for device type with detailed error reporting"""
+        
+        # Check for missing discovery dependencies first
+        missing_deps = self._check_discovery_dependencies()
+        if missing_deps:
+            logger.error(f"Cannot generate proper device code for {device_type} - missing dependencies: {missing_deps}")
+            return {
+                "success": False, 
+                "error": "missing_dependencies",
+                "missing_deps": missing_deps,
+                "message": f"Cannot identify {device_type} properly due to missing network discovery tools. Install: {', '.join(missing_deps)}"
+            }
         
         # Look for appropriate documentation
         docs_path = Path("devices/raw_docs")
@@ -306,12 +429,21 @@ class DeviceControlTool(Tool):
             if category_dir.is_dir():
                 for doc_file in category_dir.glob("*"):
                     # Simple matching - in production would use LLM analysis
-                    if any(keyword in doc_file.name.lower() for keyword in [device_type, "smartthings", "api"]):
+                    if any(keyword in doc_file.name.lower() for keyword in [device_type, "router", "gateway", "smartthings", "api"]):
                         device_docs.append(doc_file)
         
         if not device_docs:
-            logger.warning(f"No documentation found for {device_type}")
-            return False
+            logger.error(f"No documentation found for {device_type} at {device_ip}")
+            return {
+                "success": False,
+                "error": "no_documentation", 
+                "message": f"No API documentation found for {device_type}. Please add manufacturer documentation to devices/raw_docs/ folder.",
+                "suggestions": [
+                    f"Create devices/raw_docs/{device_type}/ folder",
+                    f"Add manufacturer API documentation (PDF, URL in .txt file, etc.)",
+                    f"Alternatively, provide the device manual or API specification"
+                ]
+            }
         
         # Use the first matching doc (in production, would analyze all)
         doc_file = device_docs[0]
@@ -321,15 +453,27 @@ class DeviceControlTool(Tool):
         spec = self._create_device_spec(device_type, device_ip, doc_file)
         
         # Generate communication code
-        code = self._generate_device_code(device_type, device_ip, spec)
-        
-        # Save the generated code
-        tool_path = self._get_tool_path(device_type, device_ip)
-        tool_path.parent.mkdir(parents=True, exist_ok=True)
-        tool_path.write_text(code)
-        
-        logger.info(f"Generated communication tool: {tool_path}")
-        return True
+        try:
+            code = self._generate_device_code(device_type, device_ip, spec)
+            
+            # Save the generated code
+            tool_path = self._get_tool_path(device_type, device_ip)
+            tool_path.parent.mkdir(parents=True, exist_ok=True)
+            tool_path.write_text(code)
+            
+            logger.info(f"Generated communication tool: {tool_path}")
+            return {
+                "success": True,
+                "tool_path": str(tool_path),
+                "message": f"Successfully generated communication tool for {device_type}"
+            }
+        except Exception as e:
+            logger.error(f"Code generation failed for {device_type}: {e}")
+            return {
+                "success": False,
+                "error": "code_generation_failed",
+                "message": f"Failed to generate communication code: {str(e)}"
+            }
     
     def _create_device_spec(self, device_type: str, device_ip: str, doc_file: Path) -> Dict:
         """Create device specification (simplified version)"""
@@ -416,9 +560,12 @@ class DeviceCommunicator:
         response.raise_for_status()
         return response.json()
 '''
-        else:
-            # Generate TCP socket code
-            return f'''
+        elif spec["protocol"] == "modbus_tcp":
+            # Generate proper Modbus TCP code only if we have proper device identification
+            return f'''"""
+Generated Modbus TCP communication for {device_type} at {device_ip}
+This code was generated because port 502 was detected as open.
+"""
 import socket
 import time
 import logging
@@ -426,61 +573,74 @@ import logging
 logger = logging.getLogger(__name__)
 
 class DeviceCommunicator:
-    def __init__(self, device_ip="{device_ip}", port={spec.get("default_port", 502)}):
+    def __init__(self, device_ip="{device_ip}", port=502):
         self.device_ip = device_ip
         self.port = port
         self.socket = None
         self.connected = False
     
     def connect(self):
-        """Connect to device via TCP"""
+        """Connect to Modbus device via TCP"""
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(5)
             self.socket.connect((self.device_ip, self.port))
             self.connected = True
-            logger.info(f"Connected to {{self.device_ip}}:{{self.port}}")
+            logger.info(f"Connected to Modbus device at {{self.device_ip}}:{{self.port}}")
             return True
         except Exception as e:
-            logger.error(f"Connection failed: {{e}}")
+            logger.error(f"Modbus connection failed: {{e}}")
             return False
     
     def disconnect(self):
-        """Disconnect from device"""
+        """Disconnect from Modbus device"""
         if self.socket:
             self.socket.close()
         self.connected = False
     
-    def read_status(self):
-        """Read device status"""
+    def read_holding_registers(self, start_address=0, count=1):
+        """Read Modbus holding registers"""
         if not self.connected:
             self.connect()
         
-        # Simple status read (would be protocol-specific in production)
-        try:
-            self.socket.send(b"\\x01\\x03\\x00\\x00\\x00\\x01")  # Sample Modbus read
-            response = self.socket.recv(1024)
-            return {{"raw_response": response.hex(), "status": "received"}}
-        except Exception as e:
-            logger.error(f"Status read failed: {{e}}")
-            return {{"error": str(e)}}
-    
-    def send_command(self, command_data):
-        """Send command to device"""
-        if not self.connected:
-            self.connect()
+        # Basic Modbus TCP frame for reading holding registers
+        # Note: This is a simplified implementation
+        transaction_id = 0
+        protocol_id = 0
+        length = 6
+        unit_id = 1
+        function_code = 3  # Read holding registers
+        
+        # Build Modbus TCP frame
+        frame = (
+            transaction_id.to_bytes(2, 'big') +
+            protocol_id.to_bytes(2, 'big') +
+            length.to_bytes(2, 'big') +
+            unit_id.to_bytes(1, 'big') +
+            function_code.to_bytes(1, 'big') +
+            start_address.to_bytes(2, 'big') +
+            count.to_bytes(2, 'big')
+        )
         
         try:
-            if isinstance(command_data, str):
-                command_data = command_data.encode()
-            
-            self.socket.send(command_data)
+            self.socket.send(frame)
             response = self.socket.recv(1024)
-            return {{"response": response.hex(), "status": "sent"}}
+            # Basic response parsing (simplified)
+            if len(response) >= 9:
+                return {{"raw_response": response.hex(), "status": "success"}}
+            else:
+                return {{"error": "Invalid response length"}}
         except Exception as e:
-            logger.error(f"Command failed: {{e}}")
+            logger.error(f"Modbus read failed: {{e}}")
             return {{"error": str(e)}}
 '''
+        else:
+            # Refuse to generate generic code - require proper documentation
+            raise ValueError(
+                f"Cannot generate communication code for {device_type} with protocol '{spec.get('protocol', 'unknown')}'. "
+                f"This device requires specific manufacturer documentation to generate proper communication code. "
+                f"Please add API documentation to devices/raw_docs/{device_type}/ folder."
+            )
     
     def _execute_device_command(self, tool_path: Path, command: str) -> Dict:
         """Execute command using generated communication tool"""

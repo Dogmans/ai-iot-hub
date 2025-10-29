@@ -16,7 +16,26 @@ from smolagents import CodeAgent, InferenceClientModel
 
 from agents.device_tools import DeviceDiscoveryTool, DeviceControlTool, CredentialManagerTool
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging to file to avoid interfering with Textual UI
+def setup_logging(log_file="logs/ai-iot-hub.log", log_level="INFO"):
+    """Setup file-based logging to avoid console interference"""
+    log_path = Path(log_file)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Clear any existing handlers to avoid duplicate logs
+    logging.getLogger().handlers.clear()
+    
+    # Configure file logging
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper()),
+        format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s',
+        handlers=[
+            logging.FileHandler(log_path),
+            # Only add console handler in non-UI mode
+        ]
+    )
+
+# Don't initialize logging here - let each entry point configure it
 logger = logging.getLogger(__name__)
 
 class AIDeviceController:
@@ -25,6 +44,13 @@ class AIDeviceController:
     def __init__(self, config_path: str = "config/hub_config.yaml"):
         self.config_path = Path(config_path)
         self.config = self._load_config()
+        
+        # Setup file-based logging to avoid UI interference
+        log_config = self.config.get('logging', {})
+        setup_logging(
+            log_file=log_config.get('file', 'logs/ai-iot-hub.log'),
+            log_level=log_config.get('level', 'INFO')
+        )
         
         # Initialize LLM model
         import os
