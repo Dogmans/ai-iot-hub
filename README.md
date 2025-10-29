@@ -24,14 +24,36 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\Activate.ps1
 ```
 
-2. **Install dependencies**:
+2. **Install dependencies** (choose one):
+
+**Option A: Using pyproject.toml (recommended)**
 ```bash
+# Basic functionality only
 pip install -e .
+
+# With rich UI interface
+pip install -e ".[ui]"
+
+# Full functionality (all features)
+pip install -e ".[all]"
+
+# Development setup
+pip install -e ".[dev]"
 ```
 
-3. **For development**:
+**Option B: Using requirements files**
 ```bash
-pip install -e ".[dev]"
+# Minimal setup (core functionality only)
+pip install -r requirements-minimal.txt
+
+# Rich terminal UI
+pip install -r requirements-ui.txt
+
+# Full functionality
+pip install -r requirements-full.txt
+
+# Development setup
+pip install -r requirements-dev.txt
 ```
 
 ### User Interfaces

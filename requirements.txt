@@ -9,6 +9,11 @@ pyyaml>=6.0
 click>=8.1.0
 colorama>=0.4.6
 
+# === RICH TERMINAL UI ===
+# For textual_hub.py rich interface:
+textual>=0.45.0
+rich>=13.0.0
+
 # === OPTIONAL: AI/LLM functionality ===
 # Uncomment for full AI features:
 # smolagents>=0.1.0
@@ -28,10 +33,13 @@ colorama>=0.4.6
 # pymodbus>=3.5.0
 # pyserial>=3.5
 
-# === OPTIONAL: Network discovery ===
-# Uncomment for network scanning (requires nmap):
+# === OPTIONAL: Advanced network discovery ===
+# Uncomment for comprehensive device discovery:
 # python-nmap>=0.7.1
-# scapy>=2.5.0
+# zeroconf>=0.39.0
+# netdisco>=2.8.2
+# upnpclient>=0.0.8
+# mac-vendor-lookup>=0.1.11
 
 # === OPTIONAL: Web support ===
 # Uncomment for WebSocket/HTTP:
@@ -41,6 +49,7 @@ colorama>=0.4.6
 # === OPTIONAL: Bluetooth ===
 # Uncomment for BLE device support:
 # bleak>=0.21.0
+# bluetooth-adapters>=0.16.0
 
 # === DEVELOPMENT ===
 # Uncomment for development tools:

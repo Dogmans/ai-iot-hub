@@ -74,7 +74,7 @@ def test_config_file():
     if config_file.exists():
         print(f"✅ Configuration file exists: {config_file}")
         
-        with open(config_file) as f:
+        with open(config_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         print(f"📊 File size: {len(content)} characters")

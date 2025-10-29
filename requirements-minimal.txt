@@ -1,0 +1,8 @@
+# Minimal requirements for basic AI-IoT Hub functionality
+# Install with: pip install -r requirements-minimal.txt
+
+# Core functionality
+requests>=2.31.0
+pyyaml>=6.0
+click>=8.1.0
+colorama>=0.4.6
