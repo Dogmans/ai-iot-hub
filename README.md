@@ -8,9 +8,10 @@ An intelligent IoT hub using smolagents' `CodeAgent` to dynamically discover, an
 - 🔧 **Dynamic Code Generation** - Automatically creates communication modules from documentation
 - 📄 **Multi-Format Documentation Support** - PDFs, URLs, Word docs, any format
 - 🔑 **Secure Credential Management** - User-friendly prompting with secure storage
-- 🌐 **Protocol Agnostic** - REST APIs, TCP, MQTT, Modbus, WebSockets, Bluetooth
+- 🌐 **Protocol Agnostic** - REST APIs, TCP, MQTT, Modbus, WebSockets
 - ⚡ **Smart Caching** - Generated tools are reused for performance
 - 🔍 **Network Discovery** - Automatic device detection and identification
+- 🚀 **Easy Installation** - No C++ compiler requirements, clean dependencies
 
 ## Quick Start
 
@@ -26,15 +27,16 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\Activate.ps1
 
 2. **Install dependencies**:
 ```bash
+# Complete installation (recommended)
 pip install -r requirements.txt
 ```
 
-**Alternative using pyproject.toml**:
+**Alternative minimal installation**:
 ```bash
-# Basic functionality
+# Basic functionality only
 pip install -e .
 
-# With specific features
+# Add specific features as needed
 pip install -e ".[ui]"      # Rich terminal interface
 pip install -e ".[network]" # Network discovery tools
 pip install -e ".[ai]"      # Full AI capabilities
@@ -44,10 +46,7 @@ pip install -e ".[ai]"      # Full AI capabilities
 
 #### 🎨 **Rich Textual Interface (Recommended)**
 ```bash
-# Install UI dependencies
-pip install -e ".[ui]"
-
-# Launch rich terminal interface  
+# Launch rich terminal interface (included in main requirements.txt)
 python textual_hub.py
 ```
 
@@ -122,7 +121,7 @@ AI-IoT Hub uses a sophisticated AI-driven workflow that combines intelligent dev
 ```
 You: "Discover devices on my network"
 ↓
-AI Hub: Uses multi-method discovery (mDNS, netdisco, HTTP fingerprinting)
+AI Hub: Uses multi-method discovery (mDNS, zeroconf, HTTP fingerprinting)
 ↓ 
 Result: "Found Samsung SmartThings Hub at 192.168.1.100 (confidence: 90%)"
 ```
@@ -197,8 +196,6 @@ ai-iot-hub/
 - **TCP Sockets** - Raw TCP, Modbus TCP, custom protocols
 - **MQTT** - Home Assistant, IoT sensors
 - **WebSockets** - Real-time device communication
-- **Bluetooth Low Energy** - BLE sensors and devices
-- **Serial** - USB/RS485 connected devices
 
 ## Detailed Example Walkthrough
 
@@ -334,7 +331,7 @@ pip install -e .
 ```bash
 pip install -e ".[network]"
 ```
-**Capabilities**: Advanced device discovery (mDNS, netdisco, MAC lookup, HTTP fingerprinting)
+**Capabilities**: Advanced device discovery (mDNS, zeroconf, MAC lookup, HTTP fingerprinting)
 
 ### Complete Development Setup
 ```bash
