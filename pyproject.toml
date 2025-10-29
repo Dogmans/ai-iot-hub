@@ -35,6 +35,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Version Constraint Strategy:
+# - lxml: Pin to >=6.0.0,<7.0.0 to force binary wheels (avoid 4.x source compilation)
+# - upnpclient works with lxml 6.x despite declaring <5.0.0 constraint (runtime compatibility)
+# - Use explicit version ranges to prevent pip resolver conflicts during editable installs
+# - Shared dependencies (lxml, requests) are specified in multiple groups for clarity
+
 # Core AI/ML dependencies (install separately if needed)
 ai = [
     "smolagents>=0.1.0",
@@ -46,6 +52,7 @@ ai = [
 docs-processing = [
     "PyPDF2>=3.0.0",
     "pdfplumber>=0.10.0",
+    "lxml>=6.0.0,<7.0.0",       # XML processing (pin to 6.x binary wheels - shared with network group)
     "python-docx>=1.1.0",
     "beautifulsoup4>=4.12.0"
 ]
@@ -63,14 +70,16 @@ iot = [
     "pyserial>=3.5"
 ]
 
-# Network discovery (may require system dependencies)
+# Network discovery - Complete IoT device identification suite
 network = [
-    "python-nmap>=0.7.1",
-    "scapy>=2.5.0",
-    "zeroconf>=0.39.0",
-    "netdisco>=2.8.2", 
-    "upnpclient>=0.0.8",
-    "mac-vendor-lookup>=0.1.11"
+    "python-nmap>=0.7.1",      # Python wrapper for nmap (requires nmap binary)
+    "zeroconf>=0.39.0",        # mDNS/Bonjour service discovery 
+    "netdisco>=3.0.0",         # Protocol-specific IoT device discovery
+    "lxml>=6.0.0,<7.0.0",      # XML processing (pin to 6.x binary wheels, avoid 4.x source builds)
+    "upnpclient>=1.0.3",       # UPnP device discovery and control (works with lxml 6.x despite <5 constraint)
+    "mac-vendor-lookup>=0.1.11", # MAC address to manufacturer mapping
+    "ifaddr>=0.1.7",           # Network interface discovery (upnpclient dependency)
+    "scapy>=2.5.0"             # Advanced packet crafting (optional)
 ]
 
 # Bluetooth (optional)

@@ -192,18 +192,26 @@ class DeviceDiscoveryTool(Tool):
                             if self._check_port(ip, port):
                                 device_info["open_ports"].append(port)
                         
-                        # Infer device type from open ports (basic heuristics)
+                        # Basic port analysis (cannot determine actual device type without proper tools)
                         if 502 in device_info["open_ports"]:
-                            device_info["device_type"] = "modbus_device"
-                            device_info["communication_protocol"] = "modbus_tcp"
-                            device_info["requires_credentials"] = False
-                            device_info["confidence_score"] = 0.5
+                            device_info["device_type"] = "unknown_device"
+                            device_info["possible_protocols"] = ["modbus_tcp"]
+                            device_info["note"] = "Detected Modbus port - could be industrial IoT device"
                         elif 1883 in device_info["open_ports"]:
-                            device_info["device_type"] = "mqtt_device"
-                            device_info["communication_protocol"] = "mqtt"
+                            device_info["device_type"] = "unknown_device"
+                            device_info["possible_protocols"] = ["mqtt"]
+                            device_info["note"] = "Detected MQTT port - could be IoT device"
                         elif 80 in device_info["open_ports"] or 443 in device_info["open_ports"]:
-                            device_info["device_type"] = "web_device"
-                            device_info["communication_protocol"] = "http"
+                            device_info["device_type"] = "network_device"
+                            device_info["possible_protocols"] = ["http", "https"]
+                            device_info["note"] = "Web interface detected - likely router, printer, or smart device"
+                        else:
+                            device_info["device_type"] = "unknown_host"
+                            device_info["possible_protocols"] = []
+                            device_info["note"] = "Responding to ping but no common IoT ports detected"
+                        
+                        device_info["confidence_score"] = 0.1  # Very low confidence without proper scanning
+                        device_info["requires_nmap"] = True
                         
                         discovered_devices.append(device_info)
                         logger.info(f"Found device at {ip} (fallback method)")
@@ -222,10 +230,13 @@ class DeviceDiscoveryTool(Tool):
             "scan_range": network_range,
             "total_found": len(discovered_devices),
             "discovery_method": "ping_fallback",
+            "warning": "Results may include network infrastructure (routers, computers) not actual IoT devices",
             "limitations": [
-                "Using basic ping-based discovery only",
-                "Cannot identify device manufacturers or specific models",
-                "Limited protocol detection capabilities"
+                "Basic ping + port scan only - cannot verify actual device types",
+                "No manufacturer identification or device fingerprinting", 
+                "Cannot distinguish IoT devices from network equipment",
+                "Very low confidence in device classification",
+                "Install nmap for accurate device identification"
             ]
         }
         

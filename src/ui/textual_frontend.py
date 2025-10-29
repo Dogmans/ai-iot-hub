@@ -103,15 +103,24 @@ class AIIoTApp(App):
         
         # Initialize AI controller
         try:
-            from src.hub.ai_controller import AIDeviceController
+            # Fix import path - we need to go up from src/ui to project root
+            import sys
+            from pathlib import Path
+            project_root = Path(__file__).parent.parent.parent
+            sys.path.insert(0, str(project_root / 'src'))
+            
+            from hub.ai_controller import AIDeviceController
             self.ai_controller = AIDeviceController()
             self.log_message("🤖 [bold green]AI Device Controller initialized successfully![/bold green]")
             self.log_message("[dim]💡 Try: 'discover devices' or 'help'[/dim]")
-        except ImportError as e:
-            # Fallback to demo mode
-            self.ai_controller = DemoAIController()
-            self.log_message("🤖 [bold yellow]AI-IoT Hub (Demo Mode)[/bold yellow] - Ready!")
-            self.log_message("[dim]💡 Try: 'discover devices' or 'control washing machine'[/dim]")
+        except Exception as e:
+            # Fail clearly instead of misleading demo mode
+            self.ai_controller = None
+            self.log_message("[bold red]❌ Failed to initialize AI Device Controller[/bold red]")
+            self.log_message(f"[dim]Error: {e}[/dim]")
+            self.log_message("[dim]Please check your configuration and dependencies.[/dim]")
+            self.log_message("[yellow]💡 Solution: Ensure smolagents and all dependencies are installed[/yellow]")
+            self.log_message("[dim]Exit and fix the issue before continuing.[/dim]")
     
     def log_message(self, message: str, markup: bool = True):
         """Add message to response log with rich formatting"""
@@ -152,6 +161,13 @@ class AIIoTApp(App):
     
     async def process_user_message(self, message: str):
         """Process user message with AI controller"""
+        # Check if AI controller is available
+        if not self.ai_controller:
+            self.log_message("[bold red]❌ Cannot process request[/bold red]")
+            self.log_message("[dim]AI Device Controller failed to initialize.[/dim]")
+            self.log_message("[yellow]Please restart after fixing configuration issues.[/yellow]")
+            return
+            
         try:
             # Show enhanced thinking indicator with animation
             thinking_msg = "[dim]🧠 [bold]Analyzing your request...[/bold][/dim]"
@@ -222,137 +238,6 @@ class AIIoTApp(App):
         """Exit the application"""
         self.exit()
 
-
-class DemoAIController:
-    """Demo AI controller for when smolagents isn't available"""
-    
-    async def process_request_with_textual(self, textual_prompt: str, user_message: str) -> str:
-        """Process request and return Textual-formatted response"""
-        
-        # Simulate processing delay
-        await asyncio.sleep(1)
-        
-        message_lower = user_message.lower()
-        
-        if "discover" in message_lower or "find" in message_lower:
-            return """[bold green]🔍 Device Discovery Complete[/bold green]
-
-Found [yellow]3 devices[/yellow] on network [cyan]192.168.1.0/24[/cyan]:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-• [bold]Samsung SmartThings Hub[/bold]
-  IP: [cyan]192.168.1.100[/cyan] | Status: [green]🟢 Online[/green]
-  Protocol: [code]SmartThings REST API[/code]
-  [dim]Last seen: 2 minutes ago[/dim]
-  
-• [bold]Philips Hue Bridge[/bold] 
-  IP: [cyan]192.168.1.101[/cyan] | Status: [green]🟢 Online[/green]
-  Protocol: [code]Philips Hue HTTP API[/code]
-  [dim]16 lights connected[/dim]
-  
-• [bold]Modbus Temperature Sensor[/bold]
-  IP: [cyan]192.168.1.115[/cyan] | Status: [green]🟢 Online[/green] 
-  Protocol: [code]Modbus TCP Port 502[/code]
-  [dim]Current: 22.5°C[/dim]
-
-[dim]💡 Try: "control washing machine" or "check temperature sensor"[/dim]"""
-
-        elif "wash" in message_lower or "machine" in message_lower:
-            return """[bold green]🌊 Washing Machine Controller[/bold green]
-
-[yellow]Samsung SmartThings Washer[/yellow] at [cyan]192.168.1.100[/cyan]
-
-[bold]Current Status:[/bold]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• State: [green]🟢 Ready[/green]
-• Door: [cyan]Closed & Locked[/cyan] 
-• Cycle: [dim]None selected[/dim]
-• Time Remaining: [dim]--:--[/dim]
-
-[bold]Available Commands:[/bold]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• [code]start normal cycle[/code] - Standard wash (45 min)
-• [code]start delicate cycle[/code] - Gentle wash (30 min)  
-• [code]start heavy cycle[/code] - Deep clean (60 min)
-• [code]check status[/code] - Current state & progress
-• [code]stop washing[/code] - Emergency stop
-
-[dim]🔐 Credentials configured automatically via SmartThings[/dim]"""
-
-        elif "temperature" in message_lower or "sensor" in message_lower:
-            return """[bold green]🌡️ Temperature Sensor Reading[/bold green]
-
-[yellow]Modbus Temperature Sensor[/yellow] at [cyan]192.168.1.115[/cyan]
-
-[bold]Current Reading:[/bold]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Temperature: [green]22.5°C[/green] ([dim]72.5°F[/dim])
-• Humidity: [cyan]45%[/cyan]
-• Air Quality: [green]🟢 Good[/green]
-• Timestamp: [dim]Just now[/dim]
-
-[bold]Sensor Details:[/bold] 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Protocol: [code]Modbus TCP (Port 502)[/code]
-• Register: [code]Holding Register 0x01-0x03[/code]
-• Update Rate: [dim]Every 30 seconds[/dim]
-• Accuracy: [dim]±0.5°C, ±3% RH[/dim]
-
-[dim]📊 All readings within normal range (18-25°C optimal)[/dim]"""
-
-        elif "help" in message_lower:
-            return """[bold green]🤖 AI-IoT Hub Help[/bold green]
-
-[bold]Available Commands:[/bold]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[cyan]🔍 Device Discovery:[/cyan]
-• [code]discover devices[/code] - Scan network for IoT devices
-• [code]find all devices[/code] - Complete network scan with details
-• [code]scan network[/code] - Quick device discovery
-
-[cyan]⚙️ Device Control:[/cyan] 
-• [code]control washing machine[/code] - SmartThings washer interface
-• [code]start washing machine[/code] - Begin wash cycle
-• [code]check thermostat[/code] - Temperature control
-• [code]read temperature sensor[/code] - Get current sensor data
-• [code]control lights[/code] - Philips Hue bridge control
-
-[cyan]📊 Status & Monitoring:[/cyan]
-• [code]device status[/code] - Check all device states  
-• [code]network status[/code] - Network connectivity check
-• [code]system info[/code] - Hub system information
-
-[cyan]🛠️ Interface:[/cyan]
-• [code]help[/code] - Show this help message
-• [code]Ctrl+L[/code] - Clear chat history
-• [code]Ctrl+C[/code] - Exit application
-
-[dim]💡 Just type naturally - I understand conversational requests![/dim]
-[dim]Example: "Turn on the living room lights" or "What's the temperature?"[/dim]"""
-
-        else:
-            return f"""[bold yellow]🤔 Understanding Your Request[/bold yellow]
-
-You said: [italic]"{user_message}"[/italic]
-
-[bold]I can help with:[/bold]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• [green]🔍 Device discovery[/green] - Find and identify IoT devices
-• [green]⚙️ Device control[/green] - Send commands to your devices  
-• [green]📊 Status monitoring[/green] - Check device states and readings
-• [green]📚 Documentation[/green] - Learn about protocols and setup
-
-[bold]Popular Commands:[/bold]
-• [cyan]"discover devices"[/cyan] - Start here to find your devices
-• [cyan]"control washing machine"[/cyan] - SmartThings appliance control
-• [cyan]"check temperature"[/cyan] - Read sensor data
-
-[dim]💡 Try: "discover devices" or "help" for complete command list[/dim]"""
-
-    async def process_user_request(self, user_message: str) -> str:
-        """Fallback method for basic processing"""
-        return await self.process_request_with_textual("", user_message)
 
 
 def run_textual_app():
