@@ -116,7 +116,14 @@ class AIIoTApp(App):
     def log_message(self, message: str, markup: bool = True):
         """Add message to response log with rich formatting"""
         response_log = self.query_one("#response_log", RichLog)
-        response_log.write(message)
+        if markup:
+            # Use Rich Text object to ensure proper markup rendering
+            from rich.text import Text
+            text_obj = Text.from_markup(message)
+            response_log.write(text_obj)
+        else:
+            # Plain text without markup processing
+            response_log.write(message)
     
     async def action_send_message(self) -> None:
         """Handle sending user message"""
@@ -126,6 +133,10 @@ class AIIoTApp(App):
         if not message:
             return
             
+        # Disable input while processing
+        user_input.disabled = True
+        user_input.placeholder = "🤖 AI is thinking..."
+        
         # Clear input
         user_input.value = ""
         
@@ -134,15 +145,45 @@ class AIIoTApp(App):
         
         # Process with AI
         await self.process_user_message(message)
+        
+        # Re-enable input
+        user_input.disabled = False
+        user_input.placeholder = "Ask me to discover devices, control them, or check status..."
     
     async def process_user_message(self, message: str):
         """Process user message with AI controller"""
         try:
-            # Show thinking indicator
-            self.log_message("[dim]🤔 Processing your request...[/dim]")
+            # Show enhanced thinking indicator with animation
+            thinking_msg = "[dim]🧠 [bold]Analyzing your request...[/bold][/dim]"
+            self.log_message(thinking_msg)
+            
+            # Add processing steps for better user feedback
+            await asyncio.sleep(0.2)  # Brief pause for visual feedback
+            
+            # Show what we're doing based on request type
+            if any(keyword in message.lower() for keyword in ['discover', 'scan', 'find']):
+                self.log_message("[dim]🔍 [bold]Initializing device discovery...[/bold] Checking network tools...[/dim]")
+                await asyncio.sleep(0.3)
+                self.log_message("[dim]📡 [bold]Scanning network...[/bold] Looking for IoT devices...[/dim]")
+            elif any(keyword in message.lower() for keyword in ['control', 'turn', 'set', 'start', 'stop']):
+                self.log_message("[dim]🎮 [bold]Preparing device control...[/bold] Loading communication protocols...[/dim]")
+                await asyncio.sleep(0.3)
+                self.log_message("[dim]🔧 [bold]Generating control code...[/bold] Configuring device interface...[/dim]")
+            elif any(keyword in message.lower() for keyword in ['status', 'check', 'info']):
+                self.log_message("[dim]📊 [bold]Gathering device data...[/bold] Checking device status...[/dim]")
+                await asyncio.sleep(0.3)
+                self.log_message("[dim]🔍 [bold]Analyzing information...[/bold] Preparing report...[/dim]")
+            else:
+                self.log_message("[dim]🤖 [bold]AI agent processing...[/bold] Understanding request...[/dim]")
+                await asyncio.sleep(0.3)
+                self.log_message("[dim]⚙️ [bold]Executing tools...[/bold] Generating response...[/dim]")
             
             # Get AI response with Textual-specific prompt
             response = await self.get_ai_response(message)
+            
+            # Show completion with context
+            self.log_message("[dim]✅ [bold green]Complete![/bold green] Response generated successfully.[/dim]")
+            await asyncio.sleep(0.2)  # Brief pause before showing result
             
             # Display AI response
             self.log_message(f"[bold green]AI-IoT Hub:[/bold green]\n{response}")
@@ -150,6 +191,7 @@ class AIIoTApp(App):
         except Exception as e:
             self.log_message(f"[bold red]❌ Error:[/bold red] {str(e)}")
     
+
     async def get_ai_response(self, user_message: str) -> str:
         """Get AI response with Textual markup formatting"""
         

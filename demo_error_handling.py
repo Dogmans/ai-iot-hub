@@ -2,11 +2,33 @@
 Quick demonstration of the improved error handling system
 """
 import sys
+import logging
 from pathlib import Path
 
 # Add the src directory to the Python path
 src_path = Path(__file__).parent / 'src'
 sys.path.insert(0, str(src_path))
+
+# Configure logging to file to prevent console interference
+def setup_demo_logging():
+    """Setup file-based logging for demo"""
+    log_path = Path("logs/demo_error_handling.log")
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Clear any existing handlers
+    logging.getLogger().handlers.clear()
+    
+    # Configure file logging only
+    logging.basicConfig(
+        level=logging.INFO,
+        format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s',
+        handlers=[
+            logging.FileHandler(log_path),
+        ]
+    )
+
+# Setup logging before importing device tools
+setup_demo_logging()
 
 from agents.device_tools import DeviceDiscoveryTool, DeviceControlTool
 

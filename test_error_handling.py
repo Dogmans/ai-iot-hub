@@ -12,8 +12,26 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from agents.device_tools import DeviceDiscoveryTool, DeviceControlTool
 
-# Setup simple logging
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+# Setup file-based logging to prevent console interference
+def setup_test_logging():
+    """Setup file-based logging for testing"""
+    log_path = Path("logs/test_error_handling.log")
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Clear any existing handlers
+    logging.getLogger().handlers.clear()
+    
+    # Configure file logging only
+    logging.basicConfig(
+        level=logging.INFO,
+        format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s',
+        handlers=[
+            logging.FileHandler(log_path),
+        ]
+    )
+
+# Setup logging before creating logger
+setup_test_logging()
 logger = logging.getLogger(__name__)
 
 def test_discovery_without_dependencies():
