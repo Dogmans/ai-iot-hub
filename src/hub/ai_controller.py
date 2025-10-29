@@ -291,24 +291,93 @@ Please analyze this request and take appropriate action to help the user communi
     async def process_request_with_textual(self, textual_prompt: str, user_message: str) -> str:
         """Process request with Textual-specific markup formatting"""
         
-        # Create enhanced task message with Textual formatting instructions
-        enhanced_task = f"""
-IMPORTANT: Your response will be displayed in a Textual terminal interface.
-Read the file config/textual_markup_guide.md for complete formatting instructions and examples.
-Use the Textual markup syntax from that file to make your response visually appealing with colors, emojis, and proper structure.
-
-User Request: {user_message}
-"""
-        
         try:
-            # Use the enhanced task message, ensure we get just the final answer
-            response = self.agent.run(enhanced_task, return_full_result=False)
+            # Get the full agent response with all steps
+            full_response = self.agent.run(user_message, return_full_result=True)
             
-            # Convert to string if needed
-            return str(response)
+            # Extract the final answer and format it nicely
+            final_answer = str(full_response)
+            
+            # Format the response for Textual display
+            formatted_response = self._format_response_for_textual(final_answer, user_message)
+            
+            return formatted_response
             
         except Exception as e:
             return f"[bold red]❌ Error:[/bold red] {str(e)}\n[dim]Please check your configuration and try again.[/dim]"
+    
+    def _format_response_for_textual(self, response: str, user_request: str) -> str:
+        """Format AI response with Textual markup for better display"""
+        
+        # Determine response type and format accordingly
+        if "discover" in user_request.lower() or "scan" in user_request.lower():
+            return self._format_discovery_response(response)
+        elif "control" in user_request.lower() or "turn" in user_request.lower():
+            return self._format_control_response(response)
+        else:
+            return self._format_general_response(response)
+    
+    def _format_discovery_response(self, response: str) -> str:
+        """Format device discovery response with rich markup"""
+        
+        if "No IoT devices found" in response or "total_found': 0" in response:
+            return f"""🔍 [bold cyan]Network Discovery Complete[/bold cyan]
+
+📊 [bold]Results:[/bold] [red]No IoT devices detected[/red]
+
+[yellow]⚠️  Scan Limitations:[/yellow]
+[dim]• Basic ping scan only - limited device identification
+• Network infrastructure may be filtered out  
+• Missing nmap binary for advanced scanning
+• Some devices may have stealth mode enabled[/dim]
+
+[bold green]💡 Recommendations:[/bold green]
+[dim]• Install nmap binary for comprehensive device detection
+• Check if devices are powered on and connected
+• Try manually specifying known device IPs
+• Some smart devices require manufacturer apps for discovery[/dim]
+
+[cyan]📋 Try:[/cyan] [dim]"control device 192.168.1.XXX" if you know a device IP[/dim]"""
+
+        else:
+            # Parse actual device data if found
+            return f"""🔍 [bold green]Network Discovery Complete[/bold green]
+
+📊 [bold]Devices Found:[/bold] {response}
+
+[cyan]📋 Next Steps:[/cyan]
+[dim]• Use [cyan]"control device IP"[/cyan] to interact with devices
+• Use [blue]"device status IP"[/blue] to check device information[/dim]"""
+    
+    def _format_control_response(self, response: str) -> str:
+        """Format device control response with rich markup"""
+        
+        if "Error" in response or "Failed" in response:
+            return f"""🎮 [bold red]Device Control Failed[/bold red]
+
+❌ [bold]Issue:[/bold] {response}
+
+[yellow]💡 Troubleshooting:[/yellow]
+[dim]• Verify device IP address is correct
+• Check if device is powered on and connected
+• Ensure device supports the requested command
+• Some devices require authentication/pairing[/dim]"""
+        else:
+            return f"""🎮 [bold green]Device Control Success[/bold green]
+
+✅ [bold]Result:[/bold] {response}
+
+[dim]🔄 Device command executed successfully[/dim]"""
+    
+    def _format_general_response(self, response: str) -> str:
+        """Format general AI response with basic markup"""
+        
+        # Add emoji and basic formatting
+        return f"""🤖 [bold cyan]AI-IoT Hub Response[/bold cyan]
+
+{response}
+
+[dim]💬 Need help? Try: [cyan]"discover devices"[/cyan], [cyan]"help"[/cyan], or ask about specific devices[/dim]"""
 
 async def main():
     """Main entry point"""

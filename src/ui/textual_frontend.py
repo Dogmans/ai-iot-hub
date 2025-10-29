@@ -201,8 +201,9 @@ class AIIoTApp(App):
             self.log_message("[dim]✅ [bold green]Complete![/bold green] Response generated successfully.[/dim]")
             await asyncio.sleep(0.2)  # Brief pause before showing result
             
-            # Display AI response
-            self.log_message(f"[bold green]AI-IoT Hub:[/bold green]\n{response}")
+            # Display AI response - use separate calls to preserve markup
+            self.log_message("[bold green]AI-IoT Hub:[/bold green]")
+            self.log_message(response)
             
         except Exception as e:
             self.log_message(f"[bold red]❌ Error:[/bold red] {str(e)}")
@@ -234,7 +235,7 @@ class AIIoTApp(App):
         response_log.clear()
         self.log_message("🧹 [dim]Chat cleared[/dim]")
     
-    def action_quit(self) -> None:
+    async def action_quit(self) -> None:
         """Exit the application"""
         self.exit()
 
