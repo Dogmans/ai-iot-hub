@@ -1,55 +1,46 @@
-# AI-IoT Hub Requirements
-# 
-# This file contains ALL dependencies for reference.
-# For modular installation, use: pip install -e ".[category]"
+# AI-IoT Hub - Complete Requirements
+# Install with: pip install -r requirements.txt
 
-# === CORE DEPENDENCIES (always installed) ===
+# Core dependencies
 requests>=2.31.0
 pyyaml>=6.0
 click>=8.1.0
 colorama>=0.4.6
 
-# === RICH TERMINAL UI ===
-# For textual_hub.py rich interface:
+# Rich terminal UI
 textual>=0.45.0
 rich>=13.0.0
 
-# === OPTIONAL: AI/LLM functionality ===
-# Uncomment for full AI features:
-# smolagents>=0.1.0
-# huggingface-hub>=0.19.0
-# transformers>=4.35.0
+# AI/LLM functionality
+smolagents>=0.1.0
+huggingface-hub>=0.19.0
+transformers>=4.35.0
 
-# === OPTIONAL: Document processing ===
-# Uncomment for PDF/Word document parsing:
-# PyPDF2>=3.0.0
-# pdfplumber>=0.10.0
-# python-docx>=1.1.0
-# beautifulsoup4>=4.12.0
+# Document processing
+PyPDF2>=3.0.0
+pdfplumber>=0.10.0
+python-docx>=1.1.0
+beautifulsoup4>=4.12.0
 
-# === OPTIONAL: IoT protocols ===
-# Uncomment for MQTT, Modbus, Serial:
-# paho-mqtt>=1.6.0
-# pymodbus>=3.5.0
-# pyserial>=3.5
+# IoT protocols
+paho-mqtt>=1.6.0
+pymodbus>=3.5.0
+pyserial>=3.5
 
-# === OPTIONAL: Advanced network discovery ===
-# Uncomment for comprehensive device discovery:
-# python-nmap>=0.7.1
-# zeroconf>=0.39.0
-# netdisco>=2.8.2
-# upnpclient>=0.0.8
-# mac-vendor-lookup>=0.1.11
+# Network discovery
+python-nmap>=0.7.1
+zeroconf>=0.39.0
+netdisco>=2.8.2
+upnpclient>=0.0.8
+mac-vendor-lookup>=0.1.11
 
-# === OPTIONAL: Web support ===
-# Uncomment for WebSocket/HTTP:
-# aiohttp>=3.9.0
-# websockets>=12.0
+# Web support
+aiohttp>=3.9.0
+websockets>=12.0
 
-# === OPTIONAL: Bluetooth ===
-# Uncomment for BLE device support:
-# bleak>=0.21.0
-# bluetooth-adapters>=0.16.0
+# Bluetooth support
+bleak>=0.21.0
+bluetooth-adapters>=0.16.0
 
 # === DEVELOPMENT ===
 # Uncomment for development tools:
