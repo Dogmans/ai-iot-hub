@@ -34,6 +34,35 @@ pip install -e .
 pip install -e ".[dev]"
 ```
 
+### User Interfaces
+
+#### 🎨 **Rich Textual Interface (Recommended)**
+```bash
+# Install UI dependencies
+pip install -e ".[ui]"
+
+# Launch rich terminal interface  
+python textual_hub.py
+```
+
+**Features:**
+- 🎨 **Rich formatting** with colors, emojis, and visual hierarchy
+- 📱 **Interactive terminal UI** with input field and scrolling chat
+- ⌨️ **Keyboard shortcuts** (Ctrl+C quit, Ctrl+L clear, Enter send)
+- 📊 **Structured responses** with proper visual formatting
+- 🎯 **Enhanced readability** for device status and control
+
+#### 💬 **Basic Terminal Interface**
+```bash
+# No extra dependencies needed
+python interactive_hub.py
+```
+
+**Features:**
+- 💬 **Simple text-based** conversation
+- 🚀 **Lightweight** - works anywhere
+- 🔧 **Fallback option** when Textual unavailable
+
 ### Basic Usage
 
 1. **Add device documentation** to `devices/raw_docs/{category}/`:

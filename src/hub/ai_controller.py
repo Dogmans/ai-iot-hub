@@ -254,6 +254,33 @@ Please analyze this request and take appropriate action to help the user communi
                 break
             except Exception as e:
                 print(f"Error: {e}\n")
+    
+    async def process_request_with_textual(self, textual_prompt: str, user_message: str) -> str:
+        """Process request with Textual-specific markup formatting"""
+        
+        # Combine the textual formatting instructions with system instructions
+        enhanced_prompt = f"""
+{self._create_system_instructions()}
+
+{textual_prompt}
+
+Remember: Your response will be displayed in a Textual terminal interface.
+Use the Textual markup syntax provided above for rich formatting.
+Make responses visually appealing with colors, emojis, and structure.
+Follow the response templates and guidelines exactly as specified.
+"""
+        
+        try:
+            # Use the enhanced prompt with the agent
+            response = self.agent.run(
+                user_message,
+                additional_instructions=enhanced_prompt
+            )
+            
+            return response
+            
+        except Exception as e:
+            return f"[bold red]❌ Error:[/bold red] {str(e)}\n[dim]Please check your configuration and try again.[/dim]"
 
 async def main():
     """Main entry point"""

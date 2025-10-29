@@ -559,10 +559,13 @@ def main():
     
     hub = SimpleAIIoTHub()
     
-    safe_print("🚀 AI-IoT Hub Controller")
+    safe_print("🚀 AI-IoT Hub Controller (Basic Interface)")
     safe_print("=" * 50)
     safe_print("I'm an AI agent that can discover and control IoT devices on your network.")
     safe_print("I use LLMs to understand device documentation and generate communication code.")
+    safe_print("")
+    safe_print("💡 For a richer experience with colors and formatting:")
+    safe_print("   pip install -e \".[ui]\" && python textual_hub.py")
     safe_print("")
     safe_print("💡 Try commands like:")
     safe_print("  • 'Discover devices on my network'")

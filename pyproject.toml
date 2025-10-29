@@ -98,6 +98,12 @@ docs = [
     "myst-parser>=2.0.0"
 ]
 
+# Rich terminal UI
+ui = [
+    "textual>=0.45.0",
+    "rich>=13.0.0"
+]
+
 # All optional dependencies
 all = [
     "smolagents>=0.1.0",
