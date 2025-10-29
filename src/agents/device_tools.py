@@ -32,6 +32,19 @@ class DeviceDiscoveryTool(Tool):
     Uses nmap, mDNS, UPnP, and HTTP fingerprinting for accurate device identification.
     Use this to find devices before trying to communicate with them.
     """
+    inputs = {
+        "network_range": {
+            "type": "string",
+            "description": "CIDR network range to scan (e.g., '192.168.1.0/24')",
+            "nullable": True
+        },
+        "timeout": {
+            "type": "integer", 
+            "description": "Maximum time to spend on discovery in seconds",
+            "nullable": True
+        }
+    }
+    output_type = "object"
     
     def __init__(self):
         super().__init__()
@@ -230,8 +243,23 @@ class DeviceControlTool(Tool):
     Control IoT devices by loading or generating communication tools and executing commands.
     This tool handles the complete workflow: spec generation, code generation, and execution.
     """
+    inputs = {
+        "device_ip": {
+            "type": "string",
+            "description": "IP address of the device to control"
+        },
+        "device_type": {
+            "type": "string", 
+            "description": "Type of device (e.g., 'washing_machine', 'thermostat')"
+        },
+        "command": {
+            "type": "string",
+            "description": "Command to execute on the device"
+        }
+    }
+    output_type = "object"
     
-    def forward(self, device_ip: str, device_type: str, command: str, **kwargs) -> Dict[str, Any]:
+    def forward(self, device_ip: str, device_type: str, command: str) -> Dict[str, Any]:
         """Control a device by generating/using communication tools"""
         
         logger.info(f"Attempting to control {device_type} at {device_ip} with command: {command}")
@@ -247,7 +275,7 @@ class DeviceControlTool(Tool):
                     return {"error": f"Failed to generate communication tool for {device_type}"}
             
             # Load and use the communication tool
-            result = self._execute_device_command(tool_path, command, **kwargs)
+            result = self._execute_device_command(tool_path, command)
             
             return {
                 "device_ip": device_ip,
@@ -454,17 +482,19 @@ class DeviceCommunicator:
             return {{"error": str(e)}}
 '''
     
-    def _execute_device_command(self, tool_path: Path, command: str, **kwargs) -> Dict:
+    def _execute_device_command(self, tool_path: Path, command: str) -> Dict:
         """Execute command using generated communication tool"""
         
         try:
             # Dynamically import the generated module
             spec = importlib.util.spec_from_file_location("device_comm", tool_path)
+            if spec is None or spec.loader is None:
+                raise ImportError(f"Could not load module from {tool_path}")
             device_module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(device_module)
             
-            # Create device communicator instance
-            device_comm = device_module.DeviceCommunicator(**kwargs)
+            # Create device communicator instance - use default constructor
+            device_comm = device_module.DeviceCommunicator()
             
             # Execute the command
             if hasattr(device_comm, command):
@@ -493,8 +523,24 @@ class CredentialManagerTool(Tool):
     Manage device credentials (API tokens, passwords, device IDs) securely.
     Prompts user for missing credentials and stores them in config file.
     """
+    inputs = {
+        "device_type": {
+            "type": "string",
+            "description": "Type of device needing credentials"
+        },
+        "credential_type": {
+            "type": "string",
+            "description": "Type of credential needed (access_token, device_id, api_key, etc.)"
+        },
+        "device_ip": {
+            "type": "string",
+            "description": "IP address of the device (optional)",
+            "nullable": True
+        }
+    }
+    output_type = "object"
     
-    def forward(self, device_type: str, credential_type: str, device_ip: str = None) -> Dict[str, Any]:
+    def forward(self, device_type: str, credential_type: str, device_ip: Optional[str] = None) -> Dict[str, Any]:
         """Get or set device credentials"""
         
         config_path = Path("config/hub_config.yaml")

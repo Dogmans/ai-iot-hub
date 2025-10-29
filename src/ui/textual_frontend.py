@@ -116,7 +116,7 @@ class AIIoTApp(App):
     def log_message(self, message: str, markup: bool = True):
         """Add message to response log with rich formatting"""
         response_log = self.query_one("#response_log", RichLog)
-        response_log.write(message, markup=markup)
+        response_log.write(message)
     
     async def action_send_message(self) -> None:
         """Handle sending user message"""

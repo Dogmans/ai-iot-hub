@@ -27,8 +27,15 @@ class AIDeviceController:
         self.config = self._load_config()
         
         # Initialize LLM model
+        import os
+        model_config = self.config.get('model', {})
+        
+        # Get API key from config or environment variable
+        api_key = model_config.get('api_key') or os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACE_API_TOKEN')
+        
         self.model = InferenceClientModel(
-            model_id=self.config.get('model', {}).get('model_id', 'meta-llama/Meta-Llama-3.1-8B-Instruct')
+            model_id=model_config.get('model_id', 'meta-llama/Meta-Llama-3.1-8B-Instruct'),
+            token=api_key
         )
         
         # Initialize agents and tools
@@ -187,10 +194,10 @@ Please analyze this request and take appropriate action to help the user communi
         
         try:
             # Use CodeAgent to process the request
-            response = self.agent.run(context_message)
+            response = self.agent.run(context_message, return_full_result=False)
             
             logger.info("Request processed successfully")
-            return response
+            return str(response)
             
         except Exception as e:
             error_msg = f"Error processing request: {e}"
@@ -258,10 +265,8 @@ Please analyze this request and take appropriate action to help the user communi
     async def process_request_with_textual(self, textual_prompt: str, user_message: str) -> str:
         """Process request with Textual-specific markup formatting"""
         
-        # Simple instruction to read the formatting config file
-        enhanced_prompt = f"""
-{self._create_system_instructions()}
-
+        # Create enhanced task message with Textual formatting instructions
+        enhanced_task = f"""
 IMPORTANT: Your response will be displayed in a Textual terminal interface.
 Read the file config/textual_markup_guide.md for complete formatting instructions and examples.
 Use the Textual markup syntax from that file to make your response visually appealing with colors, emojis, and proper structure.
@@ -270,13 +275,11 @@ User Request: {user_message}
 """
         
         try:
-            # Use the enhanced prompt with the agent
-            response = self.agent.run(
-                user_message,
-                additional_instructions=enhanced_prompt
-            )
+            # Use the enhanced task message, ensure we get just the final answer
+            response = self.agent.run(enhanced_task, return_full_result=False)
             
-            return response
+            # Convert to string if needed
+            return str(response)
             
         except Exception as e:
             return f"[bold red]❌ Error:[/bold red] {str(e)}\n[dim]Please check your configuration and try again.[/dim]"
