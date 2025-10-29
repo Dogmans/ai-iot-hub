@@ -57,6 +57,7 @@ python textual_hub.py
 - ⌨️ **Keyboard shortcuts** (Ctrl+C quit, Ctrl+L clear, Enter send)
 - 📊 **Structured responses** with proper visual formatting
 - 🎯 **Enhanced readability** for device status and control
+- 🔧 **Smart formatting** - CodeAgent reads `config/textual_markup_guide.md` for response styling
 
 #### 💬 **Basic Terminal Interface**
 ```bash
@@ -93,10 +94,10 @@ AI-IoT Hub: *Prompts for SmartThings credentials, generates code, executes comma
 ### Programmatic Usage
 
 ```python
-from src.hub.ai_controller import AIIoTHubController
+from src.hub.ai_controller import AIDeviceController
 
 async def main():
-    hub = AIIoTHubController()
+    hub = AIDeviceController()
     
     # Natural language device control
     response = await hub.process_user_request("Turn on lights in living room")

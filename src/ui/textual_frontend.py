@@ -74,25 +74,6 @@ class AIIoTApp(App):
     def __init__(self):
         super().__init__()
         self.ai_controller = None
-        self.markup_instructions = self._load_markup_instructions()
-        
-    def _load_markup_instructions(self) -> str:
-        """Load Textual markup instructions from configuration file"""
-        markup_file = Path(__file__).parent.parent.parent / "config" / "textual_markup_guide.md"
-        
-        try:
-            with open(markup_file, 'r', encoding='utf-8') as f:
-                return f.read()
-        except FileNotFoundError:
-            # Fallback basic instructions if file not found
-            return """
-Use Textual markup for formatting:
-- [bold]text[/bold] for important info
-- [green]text[/green] for success, [red]text[/red] for errors
-- [yellow]text[/yellow] for device names, [cyan]text[/cyan] for IPs
-- [dim]text[/dim] for secondary info
-- Use emojis: 🔍📡⚙️🟢🔴 for visual enhancement
-"""
         
     def compose(self) -> ComposeResult:
         """Create the UI layout"""
@@ -122,9 +103,9 @@ Use Textual markup for formatting:
         
         # Initialize AI controller
         try:
-            from src.hub.ai_controller import AIIoTHubController
-            self.ai_controller = AIIoTHubController()
-            self.log_message("🤖 [bold green]AI-IoT Hub initialized successfully![/bold green]")
+            from src.hub.ai_controller import AIDeviceController
+            self.ai_controller = AIDeviceController()
+            self.log_message("🤖 [bold green]AI Device Controller initialized successfully![/bold green]")
             self.log_message("[dim]💡 Try: 'discover devices' or 'help'[/dim]")
         except ImportError as e:
             # Fallback to demo mode
@@ -172,24 +153,8 @@ Use Textual markup for formatting:
     async def get_ai_response(self, user_message: str) -> str:
         """Get AI response with Textual markup formatting"""
         
-        # Create Textual-specific prompt using loaded instructions
-        textual_prompt = f"""
-You are the AI-IoT Hub Controller responding in a rich Textual terminal interface.
-
-TEXTUAL MARKUP FORMATTING INSTRUCTIONS:
-{self.markup_instructions}
-
-IMPORTANT: Format your entire response using the Textual markup syntax described above.
-Make responses visually appealing with appropriate colors, emojis, and structure.
-Always follow the response templates and guidelines provided.
-
-User Request: {user_message}
-
-Respond with rich Textual markup formatting as instructed above.
-"""
-        
         if self.ai_controller and hasattr(self.ai_controller, 'process_request_with_textual'):
-            return await self.ai_controller.process_request_with_textual(textual_prompt, user_message)
+            return await self.ai_controller.process_request_with_textual("", user_message)
         elif self.ai_controller:
             # Fallback for controllers without Textual support
             return await self.ai_controller.process_user_request(user_message)

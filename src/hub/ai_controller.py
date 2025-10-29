@@ -19,8 +19,8 @@ from agents.device_tools import DeviceDiscoveryTool, DeviceControlTool, Credenti
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class AIIoTHubController:
-    """Main AI-IoT Hub controller with LLM-powered device communication"""
+class AIDeviceController:
+    """Main AI-powered IoT device controller with LLM integration"""
     
     def __init__(self, config_path: str = "config/hub_config.yaml"):
         self.config_path = Path(config_path)
@@ -258,16 +258,15 @@ Please analyze this request and take appropriate action to help the user communi
     async def process_request_with_textual(self, textual_prompt: str, user_message: str) -> str:
         """Process request with Textual-specific markup formatting"""
         
-        # Combine the textual formatting instructions with system instructions
+        # Simple instruction to read the formatting config file
         enhanced_prompt = f"""
 {self._create_system_instructions()}
 
-{textual_prompt}
+IMPORTANT: Your response will be displayed in a Textual terminal interface.
+Read the file config/textual_markup_guide.md for complete formatting instructions and examples.
+Use the Textual markup syntax from that file to make your response visually appealing with colors, emojis, and proper structure.
 
-Remember: Your response will be displayed in a Textual terminal interface.
-Use the Textual markup syntax provided above for rich formatting.
-Make responses visually appealing with colors, emojis, and structure.
-Follow the response templates and guidelines exactly as specified.
+User Request: {user_message}
 """
         
         try:
@@ -284,7 +283,7 @@ Follow the response templates and guidelines exactly as specified.
 
 async def main():
     """Main entry point"""
-    hub = AIIoTHubController()
+    hub = AIDeviceController()
     await hub.interactive_mode()
 
 if __name__ == "__main__":

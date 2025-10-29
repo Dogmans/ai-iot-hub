@@ -11,26 +11,16 @@ from pathlib import Path
 # Add src to path
 sys.path.append(str(Path(__file__).parent / 'src'))
 
-def test_markup_loading():
-    """Test loading of markup configuration"""
-    print("🧪 Testing markup configuration loading...")
+def test_frontend_initialization():
+    """Test frontend initialization"""
+    print("🧪 Testing frontend initialization...")
     
     from src.ui.textual_frontend import AIIoTApp
     
     app = AIIoTApp()
-    instructions = app.markup_instructions
     
-    print(f"✅ Loaded {len(instructions)} characters of markup instructions")
-    print(f"📝 Sample: {instructions[:100]}...")
-    
-    # Check for key formatting elements
-    required_elements = ['[bold]', '[green]', '[red]', '🔍', '━━━']
-    missing = [elem for elem in required_elements if elem not in instructions]
-    
-    if missing:
-        print(f"⚠️  Missing elements: {missing}")
-    else:
-        print("✅ All required markup elements found")
+    print("✅ AIIoTApp initialized successfully")
+    print("✅ No markup instructions loaded (CodeAgent reads file directly)")
 
 def test_demo_controller():
     """Test demo controller responses"""
@@ -96,7 +86,7 @@ def main():
     
     try:
         test_config_file()
-        test_markup_loading()
+        test_frontend_initialization()
         test_demo_controller()
         
         print("\n✨ All tests completed!")

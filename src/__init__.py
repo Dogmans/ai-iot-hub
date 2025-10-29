@@ -6,11 +6,11 @@ __email__ = "contact@ai-iot-hub.dev"
 __description__ = "An intelligent IoT hub using smolagents for dynamic device discovery and communication"
 
 # Core imports for easy access
-from .hub.ai_controller import AIIoTHubController
+from .hub.ai_controller import AIDeviceController
 from .agents.device_tools import DeviceDiscoveryTool, DeviceControlTool, CredentialManagerTool
 
 __all__ = [
-    "AIIoTHubController",
+    "AIDeviceController",
     "DeviceDiscoveryTool", 
     "DeviceControlTool",
     "CredentialManagerTool"

@@ -134,9 +134,9 @@ mkdir -p devices/raw_docs/sensors
 
 3. **Test basic functionality**:
 ```python
-from src.hub.ai_controller import AIIoTHubController
+from src.hub.ai_controller import AIDeviceController
 
-hub = AIIoTHubController()
+hub = AIDeviceController()
 print("AI-IoT Hub initialized successfully!")
 ```
 
