@@ -21,7 +21,7 @@ class AIIoTHub:
     def __init__(self, config_path="config/hub_config.yaml"):
         self.config = self._load_config(config_path)
         self.model = InferenceClientModel()
-        self.code_agent = DeviceCodeAgent(model=self.model)
+        self.code_agent = DeviceCodeAgent(model=self.model, config=self.config)
         self.discovery = NetworkDiscovery()
         
     def _load_config(self, config_path):

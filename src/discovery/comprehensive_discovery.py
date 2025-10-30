@@ -207,11 +207,16 @@ class ComprehensiveDeviceDiscovery:
         
         try:
             nm = nmap.PortScanner()
-            # Fast scan with OS detection and service version detection
-            scan_args = '-sn -O --osscan-guess'  # Ping scan with OS detection
-            self.logger.debug(f"Running nmap scan: {scan_args}")
-            
-            scan_result = nm.scan(network_range, arguments=scan_args)
+            # Fast TCP SYN scan with OS detection (requires admin on Windows)
+            try:
+                scan_args = '-sS -O --osscan-guess --top-ports 100'  # SYN scan with OS detection
+                self.logger.debug(f"Running nmap scan with OS detection: {scan_args}")
+                scan_result = nm.scan(network_range, arguments=scan_args)
+            except Exception as e:
+                # Fallback to simple ping scan if OS detection fails (no admin rights)
+                scan_args = '-sn'  # Simple ping scan
+                self.logger.debug(f"OS detection failed, using simple ping scan: {scan_args}")
+                scan_result = nm.scan(network_range, arguments=scan_args)
             
             for host in nm.all_hosts():
                 if nm[host].state() == 'up':

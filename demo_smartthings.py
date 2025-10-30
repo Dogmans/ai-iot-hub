@@ -21,7 +21,8 @@ async def process_smartthings_washing_machine():
     print("=" * 60)
     
     # Initialize code agent (processes documentation directly)
-    code_agent = DeviceCodeAgent()
+    # Use empty config for demo - will use default imports
+    code_agent = DeviceCodeAgent(config={})
     
     # Step 1: Documentation ready for CodeAgent processing
     doc_path = Path("devices/raw_docs/thermostats/samsung_smartthings_api.txt")

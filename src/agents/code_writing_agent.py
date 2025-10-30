@@ -3,6 +3,11 @@ Device Code Writing Agent
 
 Uses smolagents CodeAgent to dynamically generate Python communication code
 for IoT devices based on parsed specifications.
+
+CONFIGURATION:
+- Authorized imports are loaded from config/hub_config.yaml
+- Edit 'code_generation.additional_imports' to add new modules  
+- Falls back to basic defaults if no config provided
 """
 
 from smolagents import CodeAgent, InferenceClientModel
@@ -13,26 +18,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 class DeviceCodeAgent:
-    def __init__(self, model=None):
+    def __init__(self, model=None, config=None):
         self.model = model or InferenceClientModel()
+        self.config = config or {}
+        
+        # Get authorized imports from config or use default set
+        code_gen_config = self.config.get('code_generation', {})
+        authorized_imports = code_gen_config.get('additional_imports', ['pathlib', 'json', 'socket', 'requests'])
+        
+        logger.info(f"Initializing DeviceCodeAgent with {len(authorized_imports)} authorized imports")
+        
         self.agent = CodeAgent(
             tools=[],
             model=self.model,
-            additional_authorized_imports=[
-                'socket', 'requests', 'asyncio', 'json', 'time',
-                'paho.mqtt.client', 'pymodbus.client', 'websockets'
-            ]
+            additional_authorized_imports=authorized_imports
         )
     
     async def generate_device_communicator(self, device_ip, device_type):
-        """Generate Python communication code for specific device"""
+        """Generate Python communication code for specific device using pathlib"""
         spec_path = Path(f"devices/generated_specs/{device_type}_spec.json")
         
         if not spec_path.exists():
             raise FileNotFoundError(f"No spec found for device type: {device_type}")
         
-        with open(spec_path) as f:
-            spec = json.load(f)
+        # Use pathlib for file operations
+        spec = json.loads(spec_path.read_text())
         
         # Create prompt for code generation
         prompt = self._create_generation_prompt(device_ip, device_type, spec)
@@ -66,6 +76,7 @@ Requirements:
 3. Handle authentication if required
 4. Include proper error handling and timeouts
 5. Use appropriate libraries ({self._get_protocol_libraries(protocol)})
+6. Use pathlib.Path for any file operations (not os.path)
 
 Example method structure:
 ```python

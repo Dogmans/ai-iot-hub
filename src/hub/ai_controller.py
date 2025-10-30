@@ -3,6 +3,11 @@ AI-IoT Hub Main Controller with LLM Integration
 
 This is the main interface that uses smolagents to understand user requests,
 generate device communication code, and execute commands on IoT devices.
+
+CONFIGURATION:
+- Authorized imports for CodeAgent are configured in config/hub_config.yaml 
+- Edit the 'code_generation.additional_imports' list to add new modules
+- All listed modules must be installed or initialization will fail
 """
 
 import asyncio
@@ -69,6 +74,12 @@ class AIDeviceController:
         self.device_control = DeviceControlTool()
         self.credential_manager = CredentialManagerTool()
         
+        # Get authorized imports from config
+        code_gen_config = self.config.get('code_generation', {})
+        authorized_imports = code_gen_config.get('additional_imports', [])
+        
+        logger.info(f"Initializing CodeAgent with {len(authorized_imports)} authorized imports")
+        
         # Initialize main LLM agent with tools
         self.agent = CodeAgent(
             tools=[
@@ -77,11 +88,7 @@ class AIDeviceController:
                 self.credential_manager
             ],
             model=self.model,
-            additional_authorized_imports=[
-                'requests', 'socket', 'asyncio', 'json', 'time',
-                'paho.mqtt.client', 'pymodbus.client', 'websockets',
-                'yaml', 'pathlib', 'importlib.util'
-            ],
+            additional_authorized_imports=authorized_imports,
             instructions=self._create_system_instructions()
         )
         
@@ -140,18 +147,30 @@ You help users:
 - `hub_config.yaml`: Main config with credentials, device registry
 - Store API tokens, passwords, device IDs here securely
 
-## Communication Protocols Supported
+## Enhanced Capabilities
 
+**Python Access**: You have access to safe Python modules including:
+- File system operations using `pathlib` (preferred over os.path for cross-platform compatibility)
+- Basic libraries: collections, datetime, itertools, math, random, re, statistics, time, unicodedata
+- Text processing: json parsing, regex, string operations
+- Data structures: collections, itertools, functools
+
+**Important**: Use `pathlib.Path` for all file operations instead of `os.path` to avoid platform-specific path issues.
+
+**Communication Protocols Supported**:
 - **REST API**: HTTP requests with authentication (SmartThings, Nest, etc.)
 - **TCP Sockets**: Raw TCP or protocol-specific (Modbus TCP)
 - **MQTT**: Publish/subscribe messaging
 - **WebSockets**: Real-time bidirectional communication
+- **Bluetooth LE**: Using bleak for BLE device communication
+- **UPnP**: Device discovery and control
+- **mDNS/Bonjour**: Service discovery with zeroconf
 
 ## Workflow for Device Communication
 
-1. **Check for existing tool**: Look in `tools/generated/` for `{device_type}_{ip}.py`
+1. **Check for existing tool**: Use `pathlib.Path("tools/generated").glob(f"{device_type}_{ip}.py")` 
 2. **If no tool exists**:
-   - Find device docs in `devices/raw_docs/`
+   - Find device docs using `pathlib.Path("devices/raw_docs").iterdir()`
    - Parse documentation into structured spec
    - Generate Python communication code
    - Save as `tools/generated/{device_type}_{ip}.py`
@@ -231,7 +250,7 @@ Please analyze this request and take appropriate action to help the user communi
             return error_msg
     
     def _list_available_docs(self) -> list:
-        """List available raw documentation files"""
+        """List available raw documentation files using pathlib"""
         docs_path = Path("devices/raw_docs")
         if not docs_path.exists():
             return []
@@ -240,24 +259,25 @@ Please analyze this request and take appropriate action to help the user communi
         for category_dir in docs_path.iterdir():
             if category_dir.is_dir():
                 for doc_file in category_dir.iterdir():
-                    docs.append(f"{category_dir.name}/{doc_file.name}")
+                    if doc_file.is_file():
+                        docs.append(f"{category_dir.name}/{doc_file.name}")
         return docs
     
     def _list_generated_specs(self) -> list:
-        """List generated specification files"""
+        """List generated specification files using pathlib"""
         specs_path = Path("devices/generated_specs")
         if not specs_path.exists():
             return []
         
-        return [f.name for f in specs_path.iterdir() if f.suffix == '.json']
+        return [f.name for f in specs_path.iterdir() if f.is_file() and f.suffix == '.json']
     
     def _list_cached_tools(self) -> list:
-        """List cached communication tools"""
+        """List cached communication tools using pathlib"""
         tools_path = Path("tools/generated")
         if not tools_path.exists():
             return []
         
-        return [f.name for f in tools_path.iterdir() if f.suffix == '.py']
+        return [f.name for f in tools_path.iterdir() if f.is_file() and f.suffix == '.py']
     
     async def interactive_mode(self):
         """Run interactive chat mode with the user"""

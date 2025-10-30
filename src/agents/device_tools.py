@@ -17,11 +17,20 @@ import yaml
 from smolagents import Tool
 
 # Import our comprehensive discovery engine
+get_discovery_engine = None
+HAS_COMPREHENSIVE_DISCOVERY = False
+
 try:
+    # Try relative import first (when used as module)
     from ..discovery.comprehensive_discovery import get_discovery_engine
     HAS_COMPREHENSIVE_DISCOVERY = True
 except ImportError:
-    HAS_COMPREHENSIVE_DISCOVERY = False
+    try:
+        # Fallback to absolute import (when running directly)
+        from discovery.comprehensive_discovery import get_discovery_engine
+        HAS_COMPREHENSIVE_DISCOVERY = True
+    except ImportError:
+        pass  # get_discovery_engine remains None
 
 logger = logging.getLogger(__name__)
 
