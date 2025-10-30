@@ -47,7 +47,7 @@ pip install -e ".[ai]"      # Full AI capabilities
 #### 🎨 **Rich Textual Interface (Recommended)**
 ```bash
 # Launch rich terminal interface (included in main requirements.txt)
-python textual_hub.py
+python examples/textual_hub.py
 ```
 
 **Features:**
@@ -410,6 +410,43 @@ model:
   model_id: "your-model-id" 
   # Works with any Hugging Face model or OpenAI API
 ```
+
+## Project Structure
+
+```
+├── src/
+│   ├── agents/           # Core LLM agents (CodeAgent-based)
+│   ├── hub/             # Main AI controller and interfaces  
+│   └── discovery/       # Network discovery engines
+├── config/              # Configuration files
+│   └── hub_config.yaml  # Main configuration (imports, model settings)
+├── devices/
+│   ├── raw_docs/        # Device documentation (PDFs, URLs, etc.)
+│   └── generated_specs/ # AI-parsed device specifications
+├── tools/generated/     # Generated device communication modules
+├── demos/               # Demonstration scripts
+│   ├── demo_simple.py           # Basic functionality demo
+│   ├── demo_smartthings.py      # SmartThings integration
+│   └── demo_working_discovery.py # Device discovery showcase
+├── tests/               # Test suite
+│   ├── test_discovery.py        # Discovery tests
+│   ├── test_imports_config.py   # Configuration tests
+│   └── test_code_generation.py  # CodeAgent tests
+├── examples/            # Reference implementations
+│   ├── textual_hub.py           # Rich terminal UI
+│   └── real_device_discovery.py # Discovery examples
+└── docs/                # Documentation and guides
+```
+
+### Key Directories
+
+- **`src/`** - Core application code and agents
+- **`config/`** - Configuration files (edit `hub_config.yaml` for imports)
+- **`devices/raw_docs/`** - Drop device documentation here
+- **`tools/generated/`** - Auto-generated device communication code
+- **`demos/`** - Runnable examples (`python demos/demo_simple.py`)
+- **`tests/`** - Test suite (`python tests/test_discovery.py`)  
+- **`examples/`** - Reference implementations and UI examples
 
 ## Contributing
 
