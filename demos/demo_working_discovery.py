@@ -7,7 +7,11 @@ that the AI agent will receive when discovering devices.
 """
 
 import sys
-sys.path.insert(0, "src")
+from pathlib import Path
+
+# Add src to path (works from both project root and demos directory)
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root / "src"))
 
 import json
 from discovery.comprehensive_discovery import ComprehensiveDeviceDiscovery

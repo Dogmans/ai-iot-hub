@@ -7,8 +7,9 @@ import sys
 import yaml
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, "src")
+# Add src to path (works from both project root and tests directory)
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root / "src"))
 
 from hub.ai_controller import AIDeviceController
 from agents.code_writing_agent import DeviceCodeAgent
@@ -24,23 +25,23 @@ def test_config_loading():
             config = yaml.safe_load(f)
         
         imports = config.get('code_generation', {}).get('additional_imports', [])
-        print(f"✅ Config loaded: {len(imports)} imports defined")
+        print(f"[OK] Config loaded: {len(imports)} imports defined")
         print(f"Sample imports: {imports[:5]}...")
         
         return config
     else:
-        print("❌ Config file not found")
+        print("[FAIL] Config file not found")
         return {}
 
 def test_controller_initialization():
     """Test that AIDeviceController uses config imports"""
     try:
         controller = AIDeviceController()
-        print("✅ AIDeviceController initialized successfully")
+        print("[OK] AIDeviceController initialized successfully")
         print(f"Config loaded with {len(controller.config)} sections")
         return True
     except Exception as e:
-        print(f"❌ AIDeviceController failed: {e}")
+        print(f"[FAIL] AIDeviceController failed: {e}")
         return False
 
 def test_code_agent_initialization():
@@ -55,18 +56,18 @@ def test_code_agent_initialization():
             config = {}
             
         code_agent = DeviceCodeAgent(config=config)
-        print("✅ DeviceCodeAgent initialized successfully")
+        print("[OK] DeviceCodeAgent initialized successfully")
         
         # Test with empty config (should use defaults)
         code_agent_default = DeviceCodeAgent(config={})
-        print("✅ DeviceCodeAgent with empty config initialized successfully")
+        print("[OK] DeviceCodeAgent with empty config initialized successfully")
         return True
     except Exception as e:
-        print(f"❌ DeviceCodeAgent failed: {e}")
+        print(f"[FAIL] DeviceCodeAgent failed: {e}")
         return False
 
 if __name__ == "__main__":
-    print("🧪 Testing AI-IoT Hub Import Configuration")
+    print("Testing AI-IoT Hub Import Configuration")
     print("=" * 50)
     
     # Test config loading
@@ -84,6 +85,6 @@ if __name__ == "__main__":
     
     print("\n" + "=" * 50)
     if controller_ok and agent_ok:
-        print("🎉 All tests passed! Import configuration is working correctly.")
+        print("SUCCESS: All tests passed! Import configuration is working correctly.")
     else:
-        print("❌ Some tests failed. Check the configuration.")
+        print("FAILED: Some tests failed. Check the configuration.")

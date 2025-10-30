@@ -113,9 +113,10 @@ def test_imports():
         # Test that we can run files from new locations
         import subprocess
         
-        # Test a simple test file
+        # Test a simple test file using current Python executable
+        import sys
         result = subprocess.run(
-            ["python", "tests/test_imports_config.py"], 
+            [sys.executable, "tests/test_imports_config.py"], 
             capture_output=True, 
             text=True,
             timeout=30

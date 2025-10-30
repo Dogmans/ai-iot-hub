@@ -35,7 +35,9 @@ def test_discovery_imports():
             try:
                 # Test the discovery engine without smolagents dependency
                 import sys
-                sys.path.insert(0, "src")
+                from pathlib import Path
+                project_root = Path(__file__).parent.parent
+                sys.path.insert(0, str(project_root / "src"))
                 from discovery.comprehensive_discovery import ComprehensiveDeviceDiscovery
                 print("✅ Direct discovery engine imports successful")
                 return True
@@ -65,7 +67,9 @@ def test_device_tools():
             try:
                 # Import discovery engine directly
                 import sys
-                sys.path.insert(0, "src")
+                from pathlib import Path
+                project_root = Path(__file__).parent.parent
+                sys.path.insert(0, str(project_root / "src"))
                 from discovery.comprehensive_discovery import ComprehensiveDeviceDiscovery
                 discovery_tool = ComprehensiveDeviceDiscovery()
                 print("✅ Direct discovery engine instantiation successful")

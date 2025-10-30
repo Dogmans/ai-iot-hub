@@ -7,8 +7,9 @@ import sys
 import asyncio
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, "src")
+# Add src to path (works from both project root and tests directory)
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root / "src"))
 
 from agents.code_writing_agent import DeviceCodeAgent
 
